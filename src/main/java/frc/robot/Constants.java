@@ -7,6 +7,10 @@ public final class Constants {
     public static final Mode MODO_SIMULACAO = Mode.SIM;
     public static final Mode MODO_ATUAL = RobotBase.isReal() ? Mode.REAL : MODO_SIMULACAO;
 
+    public static final double kPTurn = 20.0;
+    public static final double kITurn = 0.0;
+    public static final double kDTurn = 0.0;
+
     public enum Mode {
         REAL,
         SIM,
