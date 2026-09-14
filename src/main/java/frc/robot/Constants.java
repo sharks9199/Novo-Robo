@@ -34,8 +34,10 @@ public final class Constants {
         public static final double LIMITE_CORRENTE_TRACAO_AMPERES = 40.0;
         public static final double LIMITE_CORRENTE_DIRECAO_AMPERES = 40.0;
 
-        public static final double VELOCIDADE_MAXIMA_MPS = 4.5; //
-        public static final double ACELERACAO_MAXIMA_MPS2 = 8.0;//
+
+
+        public static final double VELOCIDADE_MAXIMA_MPS = 10.0; //metrod por segundos
+        public static final double ACELERACAO_MAXIMA_MPS2 = 17.78;// metros por segundo ao quadrado... preciso ajustar.
 
         public static final double VELOCIDADE_ANGULAR_MAXIMA_RAD_S =
             Units.degreesToRadians(720.0);

@@ -27,6 +27,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.OffsetsConstants;
 import frc.robot.generated.TunerConstants;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 
 public class Drive extends SubsystemBase {
     static final double ODOMETRY_FREQUENCY =
@@ -258,6 +261,26 @@ public class Drive extends SubsystemBase {
                 posicoes
             );
         }
+    }
+
+    public void adicionarMedicaoVisao(
+        Pose2d poseVisao,
+        double timestamp,
+        Matrix<N3, N1> desvios
+    ) {
+        poseEstimator.addVisionMeasurement(
+            poseVisao,
+            timestamp,
+            desvios
+        );
+    }
+    
+    public void redefinirPose(Pose2d pose) {
+        poseEstimator.resetPose(pose);
+    }
+    
+    public void redefinirRotacaoGlobal(Rotation2d rotacao) {
+        poseEstimator.resetRotation(rotacao);
     }
 
     @AutoLogOutput(key = "SwerveStates/Measured")

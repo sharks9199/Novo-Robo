@@ -32,7 +32,7 @@ public class Vision extends SubsystemBase {
     }
 
     public void definirPipeline(int pipeline) {
-        io.definirPipeline(pipeline);
+        io.definirPipeline(pipeline); //não entendi
     }
 
     @Override
