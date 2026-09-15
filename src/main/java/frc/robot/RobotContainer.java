@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.AlinharComLimelight;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.FollowFuel;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -101,6 +102,10 @@ public class RobotContainer {
 
         controleDriver.a().whileTrue(
             new AlinharComLimelight(vision, chassi)
+        );
+
+        controleDriver.y().whileTrue(
+            new FollowFuel(vision, chassi)
         );
 
         controleOperador.leftBumper().onTrue(
