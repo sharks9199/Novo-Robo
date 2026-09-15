@@ -7,6 +7,10 @@ public final class Constants {
     public static final Mode MODO_SIMULACAO = Mode.SIM;
     public static final Mode MODO_ATUAL = RobotBase.isReal() ? Mode.REAL : MODO_SIMULACAO;
 
+    public static final double kPTurn = 20.0;
+    public static final double kITurn = 0.0;
+    public static final double kDTurn = 0.0;
+
     public enum Mode {
         REAL,
         SIM,
@@ -25,27 +29,31 @@ public final class Constants {
         public static final double DISTANCIA_ENTRE_RODAS_METROS = Units.inchesToMeters(21.0);
         public static final double MEIA_DISTANCIA_ENTRE_RODAS_METROS =
             DISTANCIA_ENTRE_RODAS_METROS / 2.0;
+        public static final double MOMENTO_INERCIA_ESTIMADO_KG_M2 = 1.42;
 
         public static final double LIMITE_CORRENTE_TRACAO_AMPERES = 40.0;
         public static final double LIMITE_CORRENTE_DIRECAO_AMPERES = 40.0;
 
-        public static final double VELOCIDADE_MAXIMA_MPS = 4.5;
-        public static final double ACELERACAO_MAXIMA_MPS2 = 8.0;
+
+
+        public static final double VELOCIDADE_MAXIMA_MPS = 10.0; //metrod por segundos
+        public static final double ACELERACAO_MAXIMA_MPS2 = 17.78;// metros por segundo ao quadrado... preciso ajustar.
 
         public static final double VELOCIDADE_ANGULAR_MAXIMA_RAD_S =
             Units.degreesToRadians(720.0);
         public static final double ACELERACAO_ANGULAR_MAXIMA_RAD_S2 =
             Units.degreesToRadians(1440.0);
 
+        public static final double DEADBAND_JOYSTICK = 0.10;
+        public static final double PERIODO_CONTROLE_SEGUNDOS = 0.02;
+
         public static final double HEADING_MINIMO_GRAUS = -90.0;
         public static final double HEADING_MAXIMO_GRAUS = 90.0;
         public static final double TOLERANCIA_LIMITE_HEADING_GRAUS = 0.25;
-
-        public static final double DEADBAND_JOYSTICK = 0.10;
-        public static final double PERIODO_CONTROLE_SEGUNDOS = 0.02;
 
         private Chassi() {}
     }
 
     private Constants() {}
 }
+        
