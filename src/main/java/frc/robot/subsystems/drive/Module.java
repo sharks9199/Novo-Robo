@@ -86,9 +86,19 @@ public class Module {
     return inputs.turnPosition;
   }
 
+  /** Returns the current drive position of the module in meters. */
+  public double getPositionMeters() {
+    return inputs.drivePositionRad * constants.WheelRadius;
+  }
+
   /** Returns the current drive velocity of the module in meters per second. */
   public double getVelocityMetersPerSec() {
     return inputs.driveVelocityRadPerSec * constants.WheelRadius;
+  }
+
+  /** Returns the module position (turn angle and drive position). */
+  public SwerveModulePosition getPosition() {
+    return new SwerveModulePosition(getPositionMeters(), getAngle());
   }
 
   /** Returns the module state (turn angle and drive velocity). */

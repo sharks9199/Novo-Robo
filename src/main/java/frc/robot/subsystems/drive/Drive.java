@@ -22,7 +22,6 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -41,16 +40,13 @@ public class Drive extends SubsystemBase {
     private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
         getModuleTranslations()
     );
-    private final Field2d field = new Field2d();
     private final Alert gyroDisconnectedAlert = new Alert(
         "Gyro desconectado. O chassi está usando a cinemática como reserva.",
         AlertType.kError
     );
 
     private Rotation2d rawGyroRotation = new Rotation2d();
-    private Rotation2d driverGyroOffset = Rotation2d.fromDegrees(
-        OffsetsConstants.Driver.FRENTE_GRAUS
-    );
+    private Rotation2d driverGyroOffset = Rotation2d.fromDegrees(OffsetsConstants.Driver.FRENTE_GRAUS);
     private SwerveModulePosition[] lastModulePositions = {
         new SwerveModulePosition(),
         new SwerveModulePosition(),
@@ -83,7 +79,6 @@ public class Drive extends SubsystemBase {
         );
         PhoenixOdometryThread.getInstance().start();
 
-        SmartDashboard.putData("Field", field);
         SmartDashboard.putNumber(
             "Chassi/Massa kg",
             Constants.Chassi.MASSA_COM_BATERIA_E_BUMPERS_KG
@@ -98,7 +93,8 @@ public class Drive extends SubsystemBase {
         );
     }
     
-    public void zerarOrientacaO() {
+    public void zerarOrientacaO(){
+
         poseEstimator.resetRotation(Rotation2d.kZero);
     }
 
@@ -125,8 +121,6 @@ public class Drive extends SubsystemBase {
         }
 
         atualizarOdometria();
-        field.setRobotPose(getPose());
-
         gyroDisconnectedAlert.set(
             !gyroInputs.connected && Constants.MODO_ATUAL != Constants.Mode.SIM
         );
@@ -195,6 +189,10 @@ public class Drive extends SubsystemBase {
         runVelocity(new ChassisSpeeds());
     }
 
+    public void zeroHeading() {
+        driverGyroOffset = getPose().getRotation();
+    }
+
     public Rotation2d getRotation() {
         return getPose().getRotation().minus(driverGyroOffset);
     }
@@ -211,22 +209,10 @@ public class Drive extends SubsystemBase {
 
     public static Translation2d[] getModuleTranslations() {
         return new Translation2d[] {
-            new Translation2d(
-                TunerConstants.FrontLeft.LocationX,
-                TunerConstants.FrontLeft.LocationY
-            ),
-            new Translation2d(
-                TunerConstants.FrontRight.LocationX,
-                TunerConstants.FrontRight.LocationY
-            ),
-            new Translation2d(
-                TunerConstants.BackLeft.LocationX,
-                TunerConstants.BackLeft.LocationY
-            ),
-            new Translation2d(
-                TunerConstants.BackRight.LocationX,
-                TunerConstants.BackRight.LocationY
-            )
+            new Translation2d(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
+            new Translation2d(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY),
+            new Translation2d(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
+            new Translation2d(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)
         };
     }
 
@@ -272,6 +258,11 @@ public class Drive extends SubsystemBase {
                 posicoes
             );
         }
+    }
+
+
+    public void adicionarMedicaoVision(edu.wpi.first.math.geometry.Pose2d pose, double timestamp) {
+        poseEstimator.addVisionMeasurement(pose, timestamp);
     }
 
     @AutoLogOutput(key = "SwerveStates/Measured")

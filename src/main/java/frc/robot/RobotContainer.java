@@ -5,7 +5,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.AlinharComLimelight;
 import frc.robot.commands.DriveCommands;
-import frc.robot.commands.FollowFuel;
+import frc.robot.commands.SetStraightMovement;
+import frc.robot.commands.SeguirBolinha;
+import frc.robot.LimelightHelpers;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -36,6 +38,16 @@ public class RobotContainer {
     public RobotContainer() {
         configurarComandosPadrao();
         configurarBotoes();
+
+        Commands.run(() -> {
+            LimelightHelpers.PoseEstimate estimativa = vision.pegarPoseMegaTag2();
+            if (estimativa.tagCount > 0) {
+                chassi.adicionarMedicaoVision(
+                    estimativa.pose,
+                    estimativa.timestampSeconds
+                );
+            }
+        }).schedule();
     }
 
     private Drive criarChassi() {
@@ -76,8 +88,7 @@ public class RobotContainer {
                 chassi,
                 () -> -controleDriver.getLeftY(),
                 () -> -controleDriver.getLeftX(),
-                () -> -controleDriver.getRightX(),
-                controleDriver.rightTrigger()
+                () -> -controleDriver.getRightX()
             )
         );
 
@@ -104,8 +115,12 @@ public class RobotContainer {
             new AlinharComLimelight(vision, chassi)
         );
 
-        controleDriver.y().whileTrue(
-            new FollowFuel(vision, chassi)
+        controleDriver.b().whileTrue(
+            new SeguirBolinha(vision, chassi)
+        );
+
+        controleDriver.rightTrigger().whileTrue(
+            new SetStraightMovement(chassi)
         );
 
         controleOperador.leftBumper().onTrue(

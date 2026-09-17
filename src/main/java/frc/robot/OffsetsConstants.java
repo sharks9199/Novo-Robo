@@ -14,21 +14,20 @@ public final class OffsetsConstants {
     }
     public static final class Swerve {
 
+        /* CONSTANTES CERTAS QUE DÃO QUASE CERTAS
+        public static final Angle FRENTE_ESQUERDA = Rotations.of(-0.1435546875); //silva
+        public static final Angle FRENTE_DIREITA = Rotations.of(0.3017578125); //silva
+        public static final Angle TRAS_ESQUERDA = Rotations.of(0.208251953125); //silva
+        public static final Angle TRAS_DIREITA = Rotations.of(-0.353759765625); //silva
 
-        
-        //CONSTANTES TOMBOLY
-        public static final Angle FRENTE_ESQUERDA = Rotations.of(-0.1142578125); //Tomboly
-        public static final Angle FRENTE_DIREITA = Rotations.of(0.293212890625); //Tomboly
-        public static final Angle TRAS_ESQUERDA = Rotations.of(0.205322265625); //Tomboly
-        public static final Angle TRAS_DIREITA = Rotations.of(-0.365234375); //Tomboly
+        */
 
-/*      
-        //CONSTANTES SILVA
+        //CONSTANTES NOVAS AJUSTADAS A
         public static final Angle FRENTE_ESQUERDA = Rotations.of(-0.13671875); //silva
         public static final Angle FRENTE_DIREITA = Rotations.of(0.29541015625); //silva
         public static final Angle TRAS_ESQUERDA = Rotations.of(0.199462890625); //silva
         public static final Angle TRAS_DIREITA = Rotations.of(-0.366455078125); //silva
-*/
+
 
         private Swerve() {}
     }
