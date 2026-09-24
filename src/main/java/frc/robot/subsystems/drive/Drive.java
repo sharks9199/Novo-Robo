@@ -197,6 +197,10 @@ public class Drive extends SubsystemBase {
         return getPose().getRotation().minus(driverGyroOffset);
     }
 
+    public Rotation2d getHeading() {
+        return rawGyroRotation;
+    }
+
     @AutoLogOutput(key = "Odometry/Robot")
     public Pose2d getPose() {
         return poseEstimator.getEstimatedPosition();
@@ -258,11 +262,6 @@ public class Drive extends SubsystemBase {
                 posicoes
             );
         }
-    }
-
-
-    public void adicionarMedicaoVision(edu.wpi.first.math.geometry.Pose2d pose, double timestamp) {
-        poseEstimator.addVisionMeasurement(pose, timestamp);
     }
 
     @AutoLogOutput(key = "SwerveStates/Measured")
