@@ -13,7 +13,7 @@ import java.util.Queue;
 
 /** IO implementation for Pigeon 2. */
 public class GyroIOReal implements GyroIO {
-  public static Pigeon2 pigeon = //tomboly: queria acessar em um command, então mudei de private final para public static.
+  private final Pigeon2 pigeon =
       new Pigeon2(
           TunerConstants.DrivetrainConstants.Pigeon2Id,
           TunerConstants.CAN_BUS);
