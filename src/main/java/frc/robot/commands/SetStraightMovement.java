@@ -43,7 +43,7 @@ public class SetStraightMovement extends Command{
     public double decidir_angulo(){
 
         List<Integer> posicoes = new ArrayList<>();
-///talvez seja melhor usar a lista...
+        ///talvez seja melhor usar a lista...
         posicoes.add(0);
         posicoes.add(90);
         posicoes.add(180);
