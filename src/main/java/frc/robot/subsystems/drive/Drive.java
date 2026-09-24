@@ -260,6 +260,11 @@ public class Drive extends SubsystemBase {
         }
     }
 
+
+    public void adicionarMedicaoVision(edu.wpi.first.math.geometry.Pose2d pose, double timestamp) {
+        poseEstimator.addVisionMeasurement(pose, timestamp);
+    }
+
     @AutoLogOutput(key = "SwerveStates/Measured")
     private SwerveModuleState[] getModuleStates() {
         SwerveModuleState[] estados = new SwerveModuleState[4];

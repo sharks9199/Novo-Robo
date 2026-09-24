@@ -2,17 +2,24 @@ package frc.robot.subsystems.vision;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.LimelightHelpers;
 
 public class Vision extends SubsystemBase {
     private final VisionIO io;
     private final VisionIO.VisionIOInputs entradas = new VisionIO.VisionIOInputs();
+    private final VisionIOLimelight limelight;
 
     public Vision(VisionIO io) {
         this.io = io;
+        this.limelight = io instanceof VisionIOLimelight ? (VisionIOLimelight) io : null;
     }
 
     public boolean temAlvo() {
         return entradas.temAlvo;
+    }
+
+    public double pegarArea(){
+        return entradas.area;
     }
 
     public boolean temAprilTag() {
@@ -29,6 +36,10 @@ public class Vision extends SubsystemBase {
 
     public int pegarAprilTagId() {
         return entradas.aprilTagId;
+    }
+
+    public LimelightHelpers.PoseEstimate pegarPoseMegaTag2() {
+        return limelight != null ? limelight.pegarPoseMegaTag2() : new LimelightHelpers.PoseEstimate();
     }
 
     public void definirPipeline(int pipeline) {

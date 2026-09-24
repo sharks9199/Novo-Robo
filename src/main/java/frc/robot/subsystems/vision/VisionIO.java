@@ -6,6 +6,7 @@ public interface VisionIO {
         public double ty = 0.0;
         public boolean temAlvo = false;
         public int aprilTagId = -1;
+        public double area = 0.0;
     }
 
     default void updateInputs(VisionIOInputs inputs) {}

@@ -12,7 +12,7 @@ import frc.robot.generated.TunerConstants;
 import java.util.Queue;
 
 /** IO implementation for Pigeon 2. */
-public class GyroIOPigeon2 implements GyroIO {
+public class GyroIOReal implements GyroIO {
   public static Pigeon2 pigeon = //tomboly: queria acessar em um command, então mudei de private final para public static.
       new Pigeon2(
           TunerConstants.DrivetrainConstants.Pigeon2Id,
@@ -22,7 +22,7 @@ public class GyroIOPigeon2 implements GyroIO {
   private final Queue<Double> yawTimestampQueue;
   private final StatusSignal<AngularVelocity> yawVelocity = pigeon.getAngularVelocityZWorld();
 
-  public GyroIOPigeon2() {
+  public GyroIOReal() {
     pigeon.getConfigurator().apply(TunerConstants.CONFIGURACAO_PIGEON);
     pigeon.getConfigurator().setYaw(0.0);
     yaw.setUpdateFrequency(Drive.ODOMETRY_FREQUENCY);

@@ -27,15 +27,25 @@ public final class Constants {
     public static final class Chassi {
         public static final double MASSA_COM_BATERIA_E_BUMPERS_KG = 30.0;
         public static final double DISTANCIA_ENTRE_RODAS_METROS = Units.inchesToMeters(21.0);
-        public static final double MEIA_DISTANCIA_ENTRE_RODAS_METROS =
-            DISTANCIA_ENTRE_RODAS_METROS / 2.0;
+        public static final double MEIA_DISTANCIA_ENTRE_RODAS_METROS = DISTANCIA_ENTRE_RODAS_METROS / 2.0;
         public static final double MOMENTO_INERCIA_ESTIMADO_KG_M2 = 1.42;
 
         public static final double LIMITE_CORRENTE_TRACAO_AMPERES = 40.0;
         public static final double LIMITE_CORRENTE_DIRECAO_AMPERES = 40.0;
 
-        public static final double VELOCIDADE_MAXIMA_MPS = 4.5; //
-        public static final double ACELERACAO_MAXIMA_MPS2 = 8.0;//
+        public static final double VELOCIDADE_MAXIMA_MPS = 10.0; // mudar aqui
+        public static final double ACELERACAO_MAXIMA_MPS2 = 17.0;//mudar aqui
+
+
+        /*
+        VELOCIDADES QUE EU CRIEI
+        LENTA: Velocidade -> 3.0 ; Aceleração -> 5.0;
+        MEDIANA: Velocidade -> 4.0 ; Aceleração -> 8.0;
+        RÁPIDA: Velocidade -> 5.5 ; Aceleração -> 12.0;
+        BEM RÁPIDA: Velocidade -> 7.0 ; Aceleração -> 15.0;
+        MUITO RÁPIDA: Velocidade -> 10.0 ; Aceleração -> 17;
+        EXTREMAMENTE RÁPIDA: Velocidade -> 12.0 ; Aceleração -> 20.0;
+         */
 
         public static final double VELOCIDADE_ANGULAR_MAXIMA_RAD_S =
             Units.degreesToRadians(720.0);
