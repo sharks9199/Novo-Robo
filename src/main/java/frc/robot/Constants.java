@@ -30,8 +30,8 @@ public final class Constants {
         public static final double LIMITE_CORRENTE_TRACAO_AMPERES = 40.0;
         public static final double LIMITE_CORRENTE_DIRECAO_AMPERES = 40.0;
 
-        public static final double VELOCIDADE_MAXIMA_MPS = 5.0;
-        public static final double ACELERACAO_MAXIMA_MPS2 = 8.5;
+        public static final double VELOCIDADE_MAXIMA_MPS = 6.5;
+        public static final double ACELERACAO_MAXIMA_MPS2 = 9.0;
 
         public static final double VELOCIDADE_ANGULAR_MAXIMA_RAD_S =
             Units.degreesToRadians(720.0);
@@ -66,10 +66,10 @@ public final class Constants {
 
         // Limite de translacao quando o botao A (Modo RETO) esta ligado.
         // Com stick em 100%, o alvo de translacao e exatamente 3,0 m/s.
-        public static final double VELOCIDADE_TRANSLACAO_MAXIMA_MPS = 3.0;
+        public static final double VELOCIDADE_TRANSLACAO_MAXIMA_MPS = 6.0;
 
         // 6 m/s² faz o robo chegar aos 3 m/s rapidamente sem um degrau seco.
-        public static final double ACELERACAO_TRANSLACAO_MAXIMA_MPS2 = 6.0;
+        public static final double ACELERACAO_TRANSLACAO_MAXIMA_MPS2 = 5.0;
 
         public static final double TOLERANCIA_ALINHAMENTO_MODULO_RAD =
             Units.degreesToRadians(2.0);
