@@ -6,171 +6,418 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.control.DirectionalInputProcessor;
 import frc.robot.subsystems.drive.control.HeadingController;
+import frc.robot.subsystems.drive.control.JerkLimiter;
+import frc.robot.subsystems.drive.control.JerkLimiter2d;
+import frc.robot.subsystems.drive.control.ModoRetoController;
 
 public final class DriveCommands {
     private DriveCommands() {}
 
-    private static final double VELOCIDADE_MINIMA_HEADING_HOLD_MPS = 0.05;
+    private static final class EstadoTeleop {
+        boolean modoRetoAnterior = false;
+        boolean aguardandoFimGiroManual = false;
+        double ultimoVxField = 0.0;
+        double ultimoVyField = 0.0;
+        double ultimoOmega = 0.0;
+    }
 
     public static Command joystickDrive(
         Drive drive,
         HeadingController headingController,
+        ModoRetoController modoReto,
         DoubleSupplier frenteTras,
         DoubleSupplier lateral,
         DoubleSupplier rotacao
     ) {
-        SlewRateLimiter limitadorX = new SlewRateLimiter(
+        DirectionalInputProcessor inputProcessor = new DirectionalInputProcessor();
+
+        SlewRateLimiter normalX = new SlewRateLimiter(
             Constants.Chassi.ACELERACAO_MAXIMA_MPS2
         );
-        SlewRateLimiter limitadorY = new SlewRateLimiter(
+        SlewRateLimiter normalY = new SlewRateLimiter(
             Constants.Chassi.ACELERACAO_MAXIMA_MPS2
         );
-        SlewRateLimiter limitadorRotacaoManual = new SlewRateLimiter(
+        SlewRateLimiter normalOmega = new SlewRateLimiter(
             Constants.Chassi.ACELERACAO_ANGULAR_MAXIMA_RAD_S2
         );
 
+        JerkLimiter2d retoTranslation = new JerkLimiter2d(
+            Constants.ModoReto.ACELERACAO_TRANSLACAO_MAXIMA_MPS2,
+            Constants.ModoReto.JERK_TRANSLACAO_MAXIMO_MPS3,
+            Constants.Chassi.PERIODO_CONTROLE_SEGUNDOS
+        );
+        JerkLimiter retoOmega = new JerkLimiter(
+            Constants.Chassi.ACELERACAO_ANGULAR_MAXIMA_RAD_S2,
+            Constants.ModoReto.JERK_ANGULAR_MAXIMO_RAD_S3,
+            Constants.Chassi.PERIODO_CONTROLE_SEGUNDOS
+        );
+
+        EstadoTeleop estado = new EstadoTeleop();
+
         return Commands.run(
             () -> {
-                Translation2d movimento = obterMovimentoLinear(
-                    frenteTras.getAsDouble(),
-                    lateral.getAsDouble()
+                double rawLongitudinal = frenteTras.getAsDouble();
+                double rawLateral = lateral.getAsDouble();
+                double rawRotation = rotacao.getAsDouble();
+
+                Translation2d normalizedTranslation = inputProcessor.process(
+                    rawLongitudinal,
+                    rawLateral
                 );
 
-                double comandoRotacao = MathUtil.applyDeadband(
-                    rotacao.getAsDouble(),
+                double rotationInput = MathUtil.applyDeadband(
+                    rawRotation,
                     Constants.Chassi.DEADBAND_JOYSTICK
                 );
-
-                double velocidadeX = limitadorX.calculate(
-                    movimento.getX() * Constants.Chassi.VELOCIDADE_MAXIMA_MPS
-                );
-                double velocidadeY = limitadorY.calculate(
-                    movimento.getY() * Constants.Chassi.VELOCIDADE_MAXIMA_MPS
+                boolean manualTurn = Math.abs(rotationInput) > 1e-6;
+                rotationInput = Math.copySign(
+                    rotationInput * rotationInput,
+                    rotationInput
                 );
 
-                boolean pilotoQuerGirar = Math.abs(comandoRotacao) > 1e-6;
-                boolean roboEstaTransladando =
-                    Math.hypot(velocidadeX, velocidadeY)
-                        > VELOCIDADE_MINIMA_HEADING_HOLD_MPS;
+                boolean modoLigado = modoReto.estaLigado();
 
-                double velocidadeAngular;
+                // O modo normal preserva a velocidade maxima do chassi.
+                // O Modo RETO possui limite proprio de 3,0 m/s.
+                double velocidadeMaximaTranslacao = modoLigado
+                    ? Constants.ModoReto.VELOCIDADE_TRANSLACAO_MAXIMA_MPS
+                    : Constants.Chassi.VELOCIDADE_MAXIMA_MPS;
 
-                if (pilotoQuerGirar) {
-                    // O motorista sempre tem prioridade sobre o HeadingController.
-                    headingController.desativar();
-
-                    comandoRotacao = Math.copySign(
-                        comandoRotacao * comandoRotacao,
-                        comandoRotacao
-                    );
-
-                    double omegaManual =
-                        comandoRotacao
-                            * Constants.Chassi.VELOCIDADE_ANGULAR_MAXIMA_RAD_S;
-
-                    velocidadeAngular =
-                        limitadorRotacaoManual.calculate(omegaManual);
-
-                } else if (roboEstaTransladando) {
-                    // Vale para frente, tras, esquerda, direita e diagonal.
-                    // Quando começa a transladar sem giro manual, a orientacao
-                    // atual vira a referencia de reta.
-                    if (!headingController.estaAtivo()) {
-                        limitadorRotacaoManual.reset(0.0);
-                        headingController.segurarHeadingAtual(
-                            drive.getRotation()
-                        );
-                    }
-
-                    // O PID corrige apenas desvios de yaw enquanto translada.
-                    velocidadeAngular = headingController.calcular(
+                Translation2d targetFieldVelocity = normalizedTranslation.times(
+                    velocidadeMaximaTranslacao
+                );
+                double targetManualOmega = rotationInput
+                    * Constants.Chassi.VELOCIDADE_ANGULAR_MAXIMA_RAD_S;
+                if (modoLigado && !estado.modoRetoAnterior) {
+                    // Entra no RETO sem parar o robo. Inicializa os limitadores com
+                    // a velocidade realmente medida no frame atual para evitar
+                    // degrau/travamento ao alternar o modo em movimento.
+                    ChassisSpeeds measuredRobot = drive.getChassisSpeeds();
+                    ChassisSpeeds measuredField = ChassisSpeeds.fromRobotRelativeSpeeds(
+                        measuredRobot,
                         drive.getRotation()
                     );
-
-                } else {
-                    // Parado e sem giro manual: nao tenta procurar angulo.
+                    retoTranslation.reset(
+                        new Translation2d(
+                            measuredField.vxMetersPerSecond,
+                            measuredField.vyMetersPerSecond
+                        )
+                    );
+                    retoOmega.reset(measuredRobot.omegaRadiansPerSecond);
+                    headingController.definirHeading(
+                        Rotation2d.kZero,
+                        drive.getHeading(),
+                        drive.getYawVelocityRadPerSec()
+                    );
+                    estado.aguardandoFimGiroManual = false;
+                } else if (!modoLigado && estado.modoRetoAnterior) {
                     headingController.desativar();
-                    limitadorRotacaoManual.reset(0.0);
-                    velocidadeAngular = 0.0;
+                    ChassisSpeeds measuredRobot = drive.getChassisSpeeds();
+                    ChassisSpeeds measuredField = ChassisSpeeds.fromRobotRelativeSpeeds(
+                        measuredRobot,
+                        drive.getRotation()
+                    );
+                    normalX.reset(measuredField.vxMetersPerSecond);
+                    normalY.reset(measuredField.vyMetersPerSecond);
+                    normalOmega.reset(measuredRobot.omegaRadiansPerSecond);
+                    estado.aguardandoFimGiroManual = false;
+                }
+                estado.modoRetoAnterior = modoLigado;
+
+                if (!modoLigado) {
+                    executarModoNormal(
+                        drive,
+                        headingController,
+                        normalX,
+                        normalY,
+                        normalOmega,
+                        targetFieldVelocity,
+                        targetManualOmega,
+                        estado
+                    );
+                } else {
+                    executarModoReto(
+                        drive,
+                        headingController,
+                        modoReto,
+                        retoTranslation,
+                        retoOmega,
+                        targetFieldVelocity,
+                        targetManualOmega,
+                        manualTurn,
+                        estado
+                    );
                 }
 
-                headingController.atualizarDashboard(
-                    drive.getRotation(),
-                    velocidadeAngular
-                );
-
-                Logger.recordOutput(
-                    "Drive/HeadingController/Ativo",
-                    headingController.estaAtivo()
-                );
-                Logger.recordOutput(
-                    "Drive/HeadingController/Transladando",
-                    roboEstaTransladando
-                );
-                Logger.recordOutput(
-                    "Drive/HeadingController/GiroManual",
-                    pilotoQuerGirar
-                );
-                Logger.recordOutput(
-                    "Drive/HeadingController/AlvoGraus",
-                    headingController.getHeadingAlvo().getDegrees()
-                );
-                Logger.recordOutput(
-                    "Drive/HeadingController/AtualGraus",
-                    drive.getRotation().getDegrees()
-                );
-                Logger.recordOutput(
-                    "Drive/HeadingController/ErroGraus",
-                    Math.toDegrees(headingController.getErroRad())
-                );
-                Logger.recordOutput(
-                    "Drive/HeadingController/OmegaAplicadoRadS",
-                    velocidadeAngular
-                );
-
-                drive.runVelocity(
-                    ChassisSpeeds.fromFieldRelativeSpeeds(
-                        velocidadeX,
-                        velocidadeY,
-                        velocidadeAngular,
-                        drive.getRotation()
-                    )
+                publicarTelemetria(
+                    drive,
+                    headingController,
+                    modoReto,
+                    inputProcessor,
+                    rawLongitudinal,
+                    rawLateral,
+                    rawRotation,
+                    normalizedTranslation,
+                    manualTurn,
+                    estado
                 );
             },
             drive
-        ).finallyDo(interrompido -> {
+        ).finallyDo(interrupted -> {
             headingController.desativar();
-            limitadorX.reset(0.0);
-            limitadorY.reset(0.0);
-            limitadorRotacaoManual.reset(0.0);
+            inputProcessor.reset();
+            normalX.reset(0.0);
+            normalY.reset(0.0);
+            normalOmega.reset(0.0);
+            retoTranslation.reset(Translation2d.kZero);
+            retoOmega.reset(0.0);
             drive.stop();
         });
     }
 
-    private static Translation2d obterMovimentoLinear(double x, double y) {
-        x = MathUtil.applyDeadband(x, Constants.Chassi.DEADBAND_JOYSTICK);
-        y = MathUtil.applyDeadband(y, Constants.Chassi.DEADBAND_JOYSTICK);
+    private static void executarModoNormal(
+        Drive drive,
+        HeadingController headingController,
+        SlewRateLimiter xLimiter,
+        SlewRateLimiter yLimiter,
+        SlewRateLimiter omegaLimiter,
+        Translation2d targetFieldVelocity,
+        double targetOmega,
+        EstadoTeleop estado
+    ) {
+        headingController.desativar();
 
-        double magnitude = Math.min(Math.hypot(x, y), 1.0);
-        if (magnitude < 1e-9) {
-            return new Translation2d();
+        double vx = xLimiter.calculate(targetFieldVelocity.getX());
+        double vy = yLimiter.calculate(targetFieldVelocity.getY());
+        double omega = omegaLimiter.calculate(targetOmega);
+
+        drive.runVelocity(
+            ChassisSpeeds.fromFieldRelativeSpeeds(
+                vx,
+                vy,
+                omega,
+                drive.getRotation()
+            )
+        );
+
+        estado.ultimoVxField = vx;
+        estado.ultimoVyField = vy;
+        estado.ultimoOmega = omega;
+    }
+
+    private static void executarModoReto(
+        Drive drive,
+        HeadingController headingController,
+        ModoRetoController modoReto,
+        JerkLimiter2d translationLimiter,
+        JerkLimiter omegaLimiter,
+        Translation2d targetFieldVelocity,
+        double targetManualOmega,
+        boolean manualTurn,
+        EstadoTeleop estado
+    ) {
+        Translation2d velocity = translationLimiter.calculate(targetFieldVelocity);
+        double targetOmega;
+
+        if (manualTurn) {
+            headingController.desativar();
+            estado.aguardandoFimGiroManual = true;
+            targetOmega = targetManualOmega;
+        } else if (estado.aguardandoFimGiroManual) {
+            targetOmega = 0.0;
+        } else {
+            Rotation2d headingRelativo = drive.getHeading();
+
+            if (
+                modoReto.deveSnaparZero(headingRelativo)
+                && (
+                    !headingController.estaAtivo()
+                    || Math.abs(headingController.getHeadingAlvo().getRadians()) > 1e-6
+                )
+            ) {
+                headingController.definirHeading(
+                    Rotation2d.kZero,
+                    headingRelativo,
+                    drive.getYawVelocityRadPerSec()
+                );
+            } else if (!headingController.estaAtivo()) {
+                headingController.segurarHeadingAtual(
+                    headingRelativo,
+                    drive.getYawVelocityRadPerSec()
+                );
+            }
+
+            targetOmega = headingController.calcular(headingRelativo);
         }
 
-        Rotation2d direcao = new Rotation2d(Math.atan2(y, x));
-        magnitude *= magnitude;
+        double omega = omegaLimiter.calculate(targetOmega);
 
-        return new Pose2d(new Translation2d(), direcao)
-            .transformBy(new Transform2d(magnitude, 0.0, new Rotation2d()))
-            .getTranslation();
+        if (
+            !manualTurn
+            && estado.aguardandoFimGiroManual
+            && Math.abs(drive.getYawVelocityRadPerSec())
+                <= Constants.Heading.TOLERANCIA_VELOCIDADE_RAD_S
+            && Math.abs(omegaLimiter.getVelocity())
+                <= Constants.Heading.TOLERANCIA_VELOCIDADE_RAD_S
+        ) {
+            estado.aguardandoFimGiroManual = false;
+            omegaLimiter.reset(0.0);
+
+            Rotation2d headingRelativo = drive.getHeading();
+            Rotation2d alvo = modoReto.deveSnaparZero(headingRelativo)
+                ? Rotation2d.kZero
+                : headingRelativo;
+
+            headingController.definirHeading(
+                alvo,
+                headingRelativo,
+                drive.getYawVelocityRadPerSec()
+            );
+            omega = 0.0;
+        }
+
+        drive.runVelocityAdvanced(
+            ChassisSpeeds.fromFieldRelativeSpeeds(
+                velocity.getX(),
+                velocity.getY(),
+                omega,
+                drive.getRotation()
+            )
+        );
+
+        estado.ultimoVxField = velocity.getX();
+        estado.ultimoVyField = velocity.getY();
+        estado.ultimoOmega = omega;
+    }
+
+    private static void publicarTelemetria(
+        Drive drive,
+        HeadingController headingController,
+        ModoRetoController modoReto,
+        DirectionalInputProcessor inputProcessor,
+        double rawLongitudinal,
+        double rawLateral,
+        double rawRotation,
+        Translation2d processedTranslation,
+        boolean manualTurn,
+        EstadoTeleop estado
+    ) {
+        headingController.atualizarDashboard(
+            drive.getHeading(),
+            estado.ultimoOmega
+        );
+        modoReto.publicarDashboard();
+
+        SmartDashboard.putBoolean(
+            "DriveInput/SnapLongitudinal",
+            inputProcessor.isSnappingLongitudinal()
+        );
+        SmartDashboard.putBoolean(
+            "DriveInput/SnapLateral",
+            inputProcessor.isSnappingLateral()
+        );
+        SmartDashboard.putNumber("DriveInput/RawLongitudinal", rawLongitudinal);
+        SmartDashboard.putNumber("DriveInput/RawLateral", rawLateral);
+        SmartDashboard.putNumber("DriveInput/RawRotation", rawRotation);
+        SmartDashboard.putNumber(
+            "DriveInput/ProcessedLongitudinal",
+            processedTranslation.getX()
+        );
+        SmartDashboard.putNumber(
+            "DriveInput/ProcessedLateral",
+            processedTranslation.getY()
+        );
+
+        SmartDashboard.putBoolean("ModoReto/ManualTurn", manualTurn);
+        SmartDashboard.putBoolean(
+            "ModoReto/AguardandoFimGiro",
+            estado.aguardandoFimGiroManual
+        );
+        SmartDashboard.putNumber(
+            "ModoReto/HeadingRelativoDeg",
+            drive.getHeading().getDegrees()
+        );
+        SmartDashboard.putBoolean(
+            "ModoReto/DentroJanela20Deg",
+            modoReto.deveSnaparZero(drive.getHeading())
+        );
+        SmartDashboard.putNumber(
+            "ModoReto/MaxModuleAlignmentErrorDeg",
+            drive.getMaxModuleAlignmentErrorDeg()
+        );
+        SmartDashboard.putNumber(
+            "ModoReto/VelocidadeMaximaMps",
+            Constants.ModoReto.VELOCIDADE_TRANSLACAO_MAXIMA_MPS
+        );
+        SmartDashboard.putNumber(
+            "ModoReto/CosineMinScale",
+            Constants.ModoReto.FATOR_MINIMO_COSINE_COMPENSATION
+        );
+        SmartDashboard.putNumber(
+            "ModoReto/CosineMinMpsEmComandoCheio",
+            Constants.ModoReto.VELOCIDADE_TRANSLACAO_MAXIMA_MPS
+                * Constants.ModoReto.FATOR_MINIMO_COSINE_COMPENSATION
+        );
+        SmartDashboard.putNumber(
+            "ModoReto/VelocidadeComandadaMps",
+            Math.hypot(estado.ultimoVxField, estado.ultimoVyField)
+        );
+        SmartDashboard.putNumber(
+            "ModoReto/VelocidadeMedidaMps",
+            drive.getTranslationalSpeedMps()
+        );
+
+        Logger.recordOutput("Drive/ModoReto/Enabled", modoReto.estaLigado());
+        Logger.recordOutput(
+            "Drive/ModoReto/VelocidadeMaximaMps",
+            Constants.ModoReto.VELOCIDADE_TRANSLACAO_MAXIMA_MPS
+        );
+        Logger.recordOutput(
+            "Drive/ModoReto/CosineMinScale",
+            Constants.ModoReto.FATOR_MINIMO_COSINE_COMPENSATION
+        );
+        Logger.recordOutput(
+            "Drive/ModoReto/VelocidadeComandadaMps",
+            Math.hypot(estado.ultimoVxField, estado.ultimoVyField)
+        );
+        Logger.recordOutput(
+            "Drive/ModoReto/VelocidadeMedidaMps",
+            drive.getTranslationalSpeedMps()
+        );
+        Logger.recordOutput("Drive/ModoReto/Estado", modoReto.getEstado().name());
+        Logger.recordOutput(
+            "Drive/ModoReto/HeadingRelativoDeg",
+            drive.getHeading().getDegrees()
+        );
+        Logger.recordOutput(
+            "Drive/ModoReto/DentroJanela20Deg",
+            modoReto.deveSnaparZero(drive.getHeading())
+        );
+        Logger.recordOutput(
+            "Drive/Input/SnapLongitudinal",
+            inputProcessor.isSnappingLongitudinal()
+        );
+        Logger.recordOutput(
+            "Drive/Input/SnapLateral",
+            inputProcessor.isSnappingLateral()
+        );
+        Logger.recordOutput(
+            "Drive/Input/ProcessedLongitudinal",
+            processedTranslation.getX()
+        );
+        Logger.recordOutput(
+            "Drive/Input/ProcessedLateral",
+            processedTranslation.getY()
+        );
     }
 }

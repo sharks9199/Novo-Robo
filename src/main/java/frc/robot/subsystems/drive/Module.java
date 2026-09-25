@@ -75,6 +75,24 @@ public class Module {
     io.setTurnPosition(state.angle);
   }
 
+  /** Runs a setpoint that has already been optimized/rate-limited upstream. */
+  public void runPreparedSetpoint(SwerveModuleState state) {
+    io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius);
+    io.setTurnPosition(state.angle);
+  }
+
+  /** Aligns the module to a requested angle with drive stopped. */
+  public void alignTo(Rotation2d angle) {
+    io.setDriveOpenLoop(0.0);
+    io.setTurnPosition(angle);
+  }
+
+  /** Applies raw drive voltage for SysId while holding the requested wheel angle. */
+  public void runDriveCharacterization(double volts, Rotation2d angle) {
+    io.setTurnPosition(angle);
+    io.setDriveOpenLoop(volts);
+  }
+
   /** Disables all outputs to motors. */
   public void stop() {
     io.setDriveOpenLoop(0.0);
@@ -104,6 +122,14 @@ public class Module {
   /** Returns the module state (turn angle and drive velocity). */
   public SwerveModuleState getState() {
     return new SwerveModuleState(getVelocityMetersPerSec(), getAngle());
+  }
+
+  public double getDriveAppliedVolts() {
+    return inputs.driveAppliedVolts;
+  }
+
+  public double getDriveCurrentAmps() {
+    return inputs.driveCurrentAmps;
   }
 
   /** Returns the module positions received this cycle. */

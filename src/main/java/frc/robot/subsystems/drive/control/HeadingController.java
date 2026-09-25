@@ -1,19 +1,25 @@
 package frc.robot.subsystems.drive.control;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 
+/** Heading hold / snap profiled, com tuning em tempo real pelo Elastic. */
 public final class HeadingController {
     private static final String DASHBOARD = "HeadingTuning/";
 
-    private final PIDController controller = new PIDController(
+    private final ProfiledPIDController controller = new ProfiledPIDController(
         Constants.Heading.KP,
         Constants.Heading.KI,
         Constants.Heading.KD,
+        new TrapezoidProfile.Constraints(
+            Constants.Heading.VELOCIDADE_CORRECAO_MAXIMA_RAD_S,
+            Constants.Heading.ACELERACAO_CORRECAO_MAXIMA_RAD_S2
+        ),
         Constants.Chassi.PERIODO_CONTROLE_SEGUNDOS
     );
 
@@ -25,11 +31,14 @@ public final class HeadingController {
     private double kD = Constants.Heading.KD;
     private double velocidadeCorrecaoMaximaRadS =
         Constants.Heading.VELOCIDADE_CORRECAO_MAXIMA_RAD_S;
+    private double aceleracaoCorrecaoMaximaRadS2 =
+        Constants.Heading.ACELERACAO_CORRECAO_MAXIMA_RAD_S2;
     private double toleranciaPosicaoRad =
         Constants.Heading.TOLERANCIA_POSICAO_RAD;
     private double toleranciaVelocidadeRadS =
         Constants.Heading.TOLERANCIA_VELOCIDADE_RAD_S;
     private double ultimoOmegaPidRadS = 0.0;
+    private double ultimoErroRad = 0.0;
 
     public HeadingController() {
         controller.enableContinuousInput(-Math.PI, Math.PI);
@@ -43,6 +52,10 @@ public final class HeadingController {
             Units.radiansToDegrees(velocidadeCorrecaoMaximaRadS)
         );
         SmartDashboard.setDefaultNumber(
+            DASHBOARD + "MaxCorrectionAccelDegPerSec2",
+            Units.radiansToDegrees(aceleracaoCorrecaoMaximaRadS2)
+        );
+        SmartDashboard.setDefaultNumber(
             DASHBOARD + "PositionToleranceDeg",
             Units.radiansToDegrees(toleranciaPosicaoRad)
         );
@@ -52,15 +65,31 @@ public final class HeadingController {
         );
     }
 
+    public void segurarHeadingAtual(Rotation2d headingAtual, double yawVelocityRadS) {
+        definirHeading(headingAtual, headingAtual, yawVelocityRadS);
+    }
+
     public void segurarHeadingAtual(Rotation2d headingAtual) {
-        headingAlvo = headingAtual;
-        controller.reset();
+        segurarHeadingAtual(headingAtual, 0.0);
+    }
+
+    public void definirHeading(
+        Rotation2d novoHeading,
+        Rotation2d headingAtual,
+        double yawVelocityRadS
+    ) {
+        headingAlvo = novoHeading;
+        ultimoErroRad = MathUtil.angleModulus(
+            headingAlvo.getRadians() - headingAtual.getRadians()
+        );
+        controller.reset(headingAtual.getRadians(), yawVelocityRadS);
+        controller.setGoal(headingAlvo.getRadians());
         ativo = true;
     }
 
     public void definirHeading(Rotation2d novoHeading) {
         headingAlvo = novoHeading;
-        controller.reset();
+        controller.setGoal(headingAlvo.getRadians());
         ativo = true;
     }
 
@@ -68,6 +97,20 @@ public final class HeadingController {
         atualizarTuningDoElastic();
 
         if (!ativo) {
+            ultimoErroRad = 0.0;
+            ultimoOmegaPidRadS = 0.0;
+            return 0.0;
+        }
+
+        ultimoErroRad = MathUtil.angleModulus(
+            headingAlvo.getRadians() - headingAtual.getRadians()
+        );
+
+        if (
+            Math.abs(ultimoErroRad) <= toleranciaPosicaoRad
+            && Math.abs(controller.getSetpoint().velocity)
+                <= toleranciaVelocidadeRadS
+        ) {
             ultimoOmegaPidRadS = 0.0;
             return 0.0;
         }
@@ -82,7 +125,6 @@ public final class HeadingController {
             -velocidadeCorrecaoMaximaRadS,
             velocidadeCorrecaoMaximaRadS
         );
-
         return ultimoOmegaPidRadS;
     }
 
@@ -92,13 +134,37 @@ public final class HeadingController {
     ) {
         atualizarTuningDoElastic();
 
+        double erroAtualRad = ativo
+            ? MathUtil.angleModulus(
+                headingAlvo.getRadians() - headingAtual.getRadians()
+            )
+            : 0.0;
+
+        if (ativo) {
+            ultimoErroRad = erroAtualRad;
+        }
+
         SmartDashboard.putBoolean(DASHBOARD + "Active", ativo);
         SmartDashboard.putBoolean(DASHBOARD + "AtSetpoint", estaNoAlvo());
-        SmartDashboard.putNumber(DASHBOARD + "CurrentHeadingDeg", headingAtual.getDegrees());
-        SmartDashboard.putNumber(DASHBOARD + "TargetHeadingDeg", headingAlvo.getDegrees());
+        SmartDashboard.putNumber(
+            DASHBOARD + "CurrentHeadingDeg",
+            headingAtual.getDegrees()
+        );
+        SmartDashboard.putNumber(
+            DASHBOARD + "TargetHeadingDeg",
+            headingAlvo.getDegrees()
+        );
         SmartDashboard.putNumber(
             DASHBOARD + "ErrorDeg",
-            ativo ? Units.radiansToDegrees(controller.getError()) : 0.0
+            Units.radiansToDegrees(erroAtualRad)
+        );
+        SmartDashboard.putNumber(
+            DASHBOARD + "ProfileSetpointDeg",
+            Units.radiansToDegrees(controller.getSetpoint().position)
+        );
+        SmartDashboard.putNumber(
+            DASHBOARD + "ProfileVelocityDegPerSec",
+            Units.radiansToDegrees(controller.getSetpoint().velocity)
         );
         SmartDashboard.putNumber(
             DASHBOARD + "PIDOutputDegPerSec",
@@ -114,7 +180,7 @@ public final class HeadingController {
         double novoKP = MathUtil.clamp(
             SmartDashboard.getNumber(DASHBOARD + "kP", Constants.Heading.KP),
             0.0,
-            20.0
+            30.0
         );
         double novoKI = MathUtil.clamp(
             SmartDashboard.getNumber(DASHBOARD + "kI", Constants.Heading.KI),
@@ -124,7 +190,7 @@ public final class HeadingController {
         double novoKD = MathUtil.clamp(
             SmartDashboard.getNumber(DASHBOARD + "kD", Constants.Heading.KD),
             0.0,
-            5.0
+            10.0
         );
 
         if (novoKP != kP || novoKI != kI || novoKD != kD) {
@@ -132,18 +198,28 @@ public final class HeadingController {
             kI = novoKI;
             kD = novoKD;
             controller.setPID(kP, kI, kD);
-            controller.reset();
         }
 
         double maxCorrecaoDegS = MathUtil.clamp(
             SmartDashboard.getNumber(
                 DASHBOARD + "MaxCorrectionDegPerSec",
-                Units.radiansToDegrees(Constants.Heading.VELOCIDADE_CORRECAO_MAXIMA_RAD_S)
+                Units.radiansToDegrees(
+                    Constants.Heading.VELOCIDADE_CORRECAO_MAXIMA_RAD_S
+                )
             ),
-            0.0,
+            1.0,
             720.0
         );
-
+        double maxAccelDegS2 = MathUtil.clamp(
+            SmartDashboard.getNumber(
+                DASHBOARD + "MaxCorrectionAccelDegPerSec2",
+                Units.radiansToDegrees(
+                    Constants.Heading.ACELERACAO_CORRECAO_MAXIMA_RAD_S2
+                )
+            ),
+            10.0,
+            5000.0
+        );
         double toleranciaPosicaoDeg = MathUtil.clamp(
             SmartDashboard.getNumber(
                 DASHBOARD + "PositionToleranceDeg",
@@ -152,20 +228,37 @@ public final class HeadingController {
             0.05,
             20.0
         );
-
         double toleranciaVelocidadeDegS = MathUtil.clamp(
             SmartDashboard.getNumber(
                 DASHBOARD + "VelocityToleranceDegPerSec",
-                Units.radiansToDegrees(Constants.Heading.TOLERANCIA_VELOCIDADE_RAD_S)
+                Units.radiansToDegrees(
+                    Constants.Heading.TOLERANCIA_VELOCIDADE_RAD_S
+                )
             ),
             0.1,
             180.0
         );
 
-        velocidadeCorrecaoMaximaRadS = Units.degreesToRadians(maxCorrecaoDegS);
-        toleranciaPosicaoRad = Units.degreesToRadians(toleranciaPosicaoDeg);
-        toleranciaVelocidadeRadS = Units.degreesToRadians(toleranciaVelocidadeDegS);
+        double novaVelMax = Units.degreesToRadians(maxCorrecaoDegS);
+        double novaAccelMax = Units.degreesToRadians(maxAccelDegS2);
+        if (
+            novaVelMax != velocidadeCorrecaoMaximaRadS
+            || novaAccelMax != aceleracaoCorrecaoMaximaRadS2
+        ) {
+            velocidadeCorrecaoMaximaRadS = novaVelMax;
+            aceleracaoCorrecaoMaximaRadS2 = novaAccelMax;
+            controller.setConstraints(
+                new TrapezoidProfile.Constraints(
+                    velocidadeCorrecaoMaximaRadS,
+                    aceleracaoCorrecaoMaximaRadS2
+                )
+            );
+        }
 
+        toleranciaPosicaoRad = Units.degreesToRadians(toleranciaPosicaoDeg);
+        toleranciaVelocidadeRadS = Units.degreesToRadians(
+            toleranciaVelocidadeDegS
+        );
         controller.setTolerance(toleranciaPosicaoRad, toleranciaVelocidadeRadS);
     }
 
@@ -173,15 +266,14 @@ public final class HeadingController {
         if (!ativo || Math.abs(correcao.getRadians()) < 1e-9) {
             return;
         }
-
         headingAlvo = headingAlvo.plus(correcao);
-        controller.reset();
+        controller.setGoal(headingAlvo.getRadians());
     }
 
     public void desativar() {
         ativo = false;
+        ultimoErroRad = 0.0;
         ultimoOmegaPidRadS = 0.0;
-        controller.reset();
     }
 
     public boolean estaAtivo() {
@@ -189,7 +281,10 @@ public final class HeadingController {
     }
 
     public boolean estaNoAlvo() {
-        return ativo && controller.atSetpoint();
+        return ativo
+            && Math.abs(ultimoErroRad) <= toleranciaPosicaoRad
+            && Math.abs(controller.getSetpoint().velocity)
+                <= toleranciaVelocidadeRadS;
     }
 
     public Rotation2d getHeadingAlvo() {
@@ -197,6 +292,6 @@ public final class HeadingController {
     }
 
     public double getErroRad() {
-        return ativo ? controller.getError() : 0.0;
+        return ativo ? ultimoErroRad : 0.0;
     }
 }

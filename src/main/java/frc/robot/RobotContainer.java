@@ -1,8 +1,11 @@
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.AlinharComLimelight;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -13,6 +16,7 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOComp;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.control.HeadingController;
+import frc.robot.subsystems.drive.control.ModoRetoController;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.Elevator.Preset;
 import frc.robot.subsystems.elevator.ElevatorIOReal;
@@ -29,6 +33,7 @@ public class RobotContainer {
 
     private final Drive chassi = criarChassi();
     private final HeadingController headingController = new HeadingController();
+    private final ModoRetoController modoReto = new ModoRetoController();
     private final Elevator elevador = criarElevador();
     private final Vision vision;
 
@@ -42,6 +47,7 @@ public class RobotContainer {
 
         configurarComandosPadrao();
         configurarBotoes();
+        configurarSysIdElastic();
     }
 
     private Drive criarChassi() {
@@ -77,13 +83,15 @@ public class RobotContainer {
     }
 
     private void aplicarMedicaoVisao(Vision.MedicaoVisao medicao) {
-        chassi.adicionarMedicaoVisao(
+        Rotation2d correcaoHeading = chassi.adicionarMedicaoVisao(
             medicao.pose(),
             medicao.timestampSegundos(),
             medicao.desvioPadraoXMetros(),
             medicao.desvioPadraoYMetros(),
             medicao.desvioPadraoThetaRad()
         );
+
+        headingController.aplicarCorrecaoReferencia(correcaoHeading);
     }
 
     private void configurarComandosPadrao() {
@@ -91,6 +99,7 @@ public class RobotContainer {
             DriveCommands.joystickDrive(
                 chassi,
                 headingController,
+                modoReto,
                 () -> -controleDriver.getLeftY(),
                 () -> -controleDriver.getLeftX(),
                 () -> -controleDriver.getRightX()
@@ -101,7 +110,7 @@ public class RobotContainer {
             Commands.run(
                 () -> elevador.atualizarEntradaOperador(
                     controleOperador.getHID().getPOV(),
-                    controleOperador.getHID().getRightTriggerAxis()
+                    controleOperador.getRightTriggerAxis()
                 ),
                 elevador
             )
@@ -116,7 +125,19 @@ public class RobotContainer {
             )
         );
 
-        controleDriver.a().whileTrue(
+        controleDriver.a().onTrue(
+            Commands.runOnce(() -> {
+                boolean ativou = modoReto.toggle();
+                if (ativou) {
+                    zerarReferenciaDriver();
+                } else {
+                    headingController.desativar();
+                }
+            })
+        );
+
+        // O A agora pertence ao Modo RETO. O alinhamento da Limelight foi preservado no X.
+        controleDriver.x().whileTrue(
             new AlinharComLimelight(vision, chassi)
         );
 
@@ -156,14 +177,53 @@ public class RobotContainer {
         );
 
         controleDriver.start().onTrue(
-            Commands.runOnce(
-                () -> {
-                    chassi.zerarOrientacaoDriver();
-                    headingController.desativar();
-                },
-                chassi
+            Commands.runOnce(this::zerarReferenciaDriver)
+        );
+    }
+
+    private void zerarReferenciaDriver() {
+        chassi.zerarOrientacaO();
+        if (modoReto.estaLigado()) {
+            headingController.definirHeading(
+                Rotation2d.kZero,
+                chassi.getHeading(),
+                chassi.getYawVelocityRadPerSec()
+            );
+        }
+    }
+
+    private void configurarSysIdElastic() {
+        SmartDashboard.putData(
+            "SysId/Quasistatic Forward",
+            prepararSysId().andThen(
+                chassi.sysIdQuasistatic(SysIdRoutine.Direction.kForward)
             )
         );
+        SmartDashboard.putData(
+            "SysId/Quasistatic Reverse",
+            prepararSysId().andThen(
+                chassi.sysIdQuasistatic(SysIdRoutine.Direction.kReverse)
+            )
+        );
+        SmartDashboard.putData(
+            "SysId/Dynamic Forward",
+            prepararSysId().andThen(
+                chassi.sysIdDynamic(SysIdRoutine.Direction.kForward)
+            )
+        );
+        SmartDashboard.putData(
+            "SysId/Dynamic Reverse",
+            prepararSysId().andThen(
+                chassi.sysIdDynamic(SysIdRoutine.Direction.kReverse)
+            )
+        );
+    }
+
+    private Command prepararSysId() {
+        return Commands.runOnce(() -> {
+            modoReto.desativar();
+            headingController.desativar();
+        });
     }
 
     public Command getAutonomousCommand() {

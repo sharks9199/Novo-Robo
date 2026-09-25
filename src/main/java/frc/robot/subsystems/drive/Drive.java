@@ -1,5 +1,12 @@
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volts;
+
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -24,10 +31,13 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.OffsetsConstants;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.drive.control.SwerveSetpointGenerator;
 
 public class Drive extends SubsystemBase {
     static final double ODOMETRY_FREQUENCY =
@@ -47,7 +57,7 @@ public class Drive extends SubsystemBase {
     );
 
     private Rotation2d rawGyroRotation = new Rotation2d();
-    private Rotation2d driverGyroOffset = Rotation2d.fromDegrees(OffsetsConstants.FRENTE_GRAUS);
+    private Rotation2d driverGyroOffset = Rotation2d.fromDegrees(OffsetsConstants.Driver.FRENTE_GRAUS);
     private SwerveModulePosition[] lastModulePositions = {
         new SwerveModulePosition(),
         new SwerveModulePosition(),
@@ -60,6 +70,9 @@ public class Drive extends SubsystemBase {
         lastModulePositions,
         new Pose2d()
     );
+    private final SwerveSetpointGenerator advancedSetpointGenerator =
+        new SwerveSetpointGenerator();
+    private final SysIdRoutine sysIdRoutine;
 
     public Drive(
         GyroIO gyroIO,
@@ -80,6 +93,24 @@ public class Drive extends SubsystemBase {
         );
         PhoenixOdometryThread.getInstance().start();
 
+        sysIdRoutine = new SysIdRoutine(
+            new SysIdRoutine.Config(
+                Volts.of(Constants.SysId.RAMP_RATE_VOLTS_POR_SEGUNDO).per(Second),
+                Volts.of(Constants.SysId.STEP_VOLTS),
+                Seconds.of(Constants.SysId.TIMEOUT_SEGUNDOS),
+                state -> {
+                    Logger.recordOutput("Drive/SysId/State", state.toString());
+                    SmartDashboard.putString("SysId/State", state.toString());
+                }
+            ),
+            new SysIdRoutine.Mechanism(
+                voltage -> runDriveCharacterization(voltage.in(Volts)),
+                this::logSysId,
+                this
+            )
+        );
+
+        SmartDashboard.putString("SysId/State", "none");
         SmartDashboard.putNumber(
             "Chassi/Massa kg",
             Constants.Chassi.MASSA_COM_BATERIA_E_BUMPERS_KG
@@ -94,18 +125,9 @@ public class Drive extends SubsystemBase {
         );
     }
     
-    /**
-     * Define a orientacao atual como zero somente para o driver.
-     * A pose global do PoseEstimator continua intacta, portanto odometria
-     * e visao continuam referenciadas ao campo.
-     */
-    public void zerarOrientacaoDriver() {
-        driverGyroOffset = getPose().getRotation();
-    }
+    public void zerarOrientacaO(){
 
-    // Alias mantido para chamadas antigas.
-    public void zerarOrientacaO() {
-        zerarOrientacaoDriver();
+        poseEstimator.resetRotation(Rotation2d.kZero);
     }
 
     @Override
@@ -193,6 +215,129 @@ public class Drive extends SubsystemBase {
         }
 
         Logger.recordOutput("SwerveStates/SetpointsOptimized", estadosDesejados);
+    }
+
+    /**
+     * Pipeline fisicamente limitado usado pelo modo RETO. Alem do discretize,
+     * limita aceleracao de roda e taxa de steering antes de enviar aos modulos.
+     */
+    public void runVelocityAdvanced(ChassisSpeeds speeds) {
+        ChassisSpeeds limited = new ChassisSpeeds(
+            MathUtil.clamp(
+                speeds.vxMetersPerSecond,
+                -Constants.Chassi.VELOCIDADE_MAXIMA_MPS,
+                Constants.Chassi.VELOCIDADE_MAXIMA_MPS
+            ),
+            MathUtil.clamp(
+                speeds.vyMetersPerSecond,
+                -Constants.Chassi.VELOCIDADE_MAXIMA_MPS,
+                Constants.Chassi.VELOCIDADE_MAXIMA_MPS
+            ),
+            MathUtil.clamp(
+                speeds.omegaRadiansPerSecond,
+                -Constants.Chassi.VELOCIDADE_ANGULAR_MAXIMA_RAD_S,
+                Constants.Chassi.VELOCIDADE_ANGULAR_MAXIMA_RAD_S
+            )
+        );
+
+        ChassisSpeeds discrete = ChassisSpeeds.discretize(
+            limited,
+            Constants.Chassi.PERIODO_CONTROLE_SEGUNDOS
+        );
+
+        SwerveModuleState[] states = advancedSetpointGenerator.generate(
+            discrete,
+            getModuleStates(),
+            kinematics,
+            Constants.Chassi.VELOCIDADE_MAXIMA_MPS,
+            Constants.ModoReto.ACELERACAO_RODA_MAXIMA_MPS2,
+            Constants.ModoReto.VELOCIDADE_STEER_MAXIMA_RAD_S,
+            Constants.ModoReto.FATOR_MINIMO_COSINE_COMPENSATION,
+            Constants.Chassi.PERIODO_CONTROLE_SEGUNDOS
+        );
+
+        Logger.recordOutput("SwerveStates/AdvancedSetpoints", states);
+        Logger.recordOutput("SwerveChassisSpeeds/AdvancedSetpoints", discrete);
+
+        for (int i = 0; i < modules.length; i++) {
+            modules[i].runPreparedSetpoint(states[i]);
+        }
+    }
+
+    public void alignModulesForward() {
+        // O zero do modulo e definido pelos MagnetOffsets dos CANcoders.
+        // FRENTE_GRAUS (-90) pertence ao frame do driver, nao ao steering.
+        Rotation2d moduleForward = Rotation2d.kZero;
+        for (Module module : modules) {
+            module.alignTo(moduleForward);
+        }
+    }
+
+    public boolean areModulesAlignedForward() {
+        Rotation2d moduleForward = Rotation2d.kZero;
+        for (Module module : modules) {
+            double error = Math.abs(
+                MathUtil.angleModulus(
+                    module.getAngle().minus(moduleForward).getRadians()
+                )
+            );
+            if (error > Constants.ModoReto.TOLERANCIA_ALINHAMENTO_MODULO_RAD) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public double getMaxModuleAlignmentErrorDeg() {
+        Rotation2d moduleForward = Rotation2d.kZero;
+        double max = 0.0;
+        for (Module module : modules) {
+            max = Math.max(
+                max,
+                Math.abs(Math.toDegrees(
+                    MathUtil.angleModulus(
+                        module.getAngle().minus(moduleForward).getRadians()
+                    )
+                ))
+            );
+        }
+        return max;
+    }
+
+    public double getTranslationalSpeedMps() {
+        ChassisSpeeds speeds = getChassisSpeeds();
+        return Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+    }
+
+    private void runDriveCharacterization(double volts) {
+        // SysId de tracao: rodas alinhadas no zero calibrado do steering.
+        Rotation2d moduleForward = Rotation2d.kZero;
+        for (Module module : modules) {
+            module.runDriveCharacterization(volts, moduleForward);
+        }
+        SmartDashboard.putNumber("SysId/CommandedVolts", volts);
+        Logger.recordOutput("Drive/SysId/CommandedVolts", volts);
+    }
+
+    private void logSysId(edu.wpi.first.wpilibj.sysid.SysIdRoutineLog log) {
+        String[] names = {"front-left", "front-right", "back-left", "back-right"};
+        for (int i = 0; i < modules.length; i++) {
+            log.motor(names[i])
+                .voltage(Volts.of(modules[i].getDriveAppliedVolts()))
+                .linearPosition(Meters.of(modules[i].getPositionMeters()))
+                .linearVelocity(MetersPerSecond.of(modules[i].getVelocityMetersPerSec()))
+                .current(Amps.of(modules[i].getDriveCurrentAmps()));
+        }
+    }
+
+    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+        return sysIdRoutine.quasistatic(direction)
+            .finallyDo(interrupted -> stop());
+    }
+
+    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+        return sysIdRoutine.dynamic(direction)
+            .finallyDo(interrupted -> stop());
     }
 
     public void stop() {
