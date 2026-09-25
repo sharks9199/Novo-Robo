@@ -40,7 +40,7 @@ public final class TunerConstants {
     private static final Slot0Configs GANHOS_DIRECAO = new Slot0Configs()
         .withKP(20.0)
         .withKI(0.0)
-        .withKD(0.9)
+        .withKD(2)
         .withKS(0.0)
         .withKV(0.12)
         .withKA(0.0)

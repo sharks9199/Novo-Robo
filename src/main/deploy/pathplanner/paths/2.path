@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.0,
-        "y": 7.0
+        "x": 7.8219638554216875,
+        "y": 4.546077032810271
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.0,
-        "y": 7.0
+        "x": 6.794992867332382,
+        "y": 8.168901569186875
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Fim do 1"
     },
     {
       "anchor": {
-        "x": 3.11212048192771,
-        "y": 7.0
+        "x": 4.466034236804564,
+        "y": 7.405520684736091
       },
       "prevControl": {
-        "x": 2.11212048192771,
-        "y": 7.0
+        "x": 5.785777460770328,
+        "y": 7.379643366619116
       },
       "nextControl": null,
       "isLocked": false,
@@ -48,7 +48,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": -90.0
   },
   "useDefaultConstraints": true
 }

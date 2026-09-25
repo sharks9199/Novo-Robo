@@ -12,6 +12,7 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOComp;
 import frc.robot.subsystems.drive.ModuleIOSim;
+import frc.robot.subsystems.drive.control.HeadingController;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.Elevator.Preset;
 import frc.robot.subsystems.elevator.ElevatorIOReal;
@@ -27,12 +28,18 @@ public class RobotContainer {
         new CommandXboxController(Constants.Controles.PORTA_OPERADOR);
 
     private final Drive chassi = criarChassi();
+    private final HeadingController headingController = new HeadingController();
     private final Elevator elevador = criarElevador();
-    private final Vision vision = new Vision(
-        new VisionIOLimelight("limelight-sharks")
-    );
+    private final Vision vision;
 
     public RobotContainer() {
+        vision = new Vision(
+            new VisionIOLimelight(Constants.Vision.NOME_LIMELIGHT),
+            chassi::getHeading,
+            chassi::getYawVelocityRadPerSec,
+            this::aplicarMedicaoVisao
+        );
+
         configurarComandosPadrao();
         configurarBotoes();
     }
@@ -69,10 +76,21 @@ public class RobotContainer {
             : new Elevator(new ElevatorIOSim());
     }
 
+    private void aplicarMedicaoVisao(Vision.MedicaoVisao medicao) {
+        chassi.adicionarMedicaoVisao(
+            medicao.pose(),
+            medicao.timestampSegundos(),
+            medicao.desvioPadraoXMetros(),
+            medicao.desvioPadraoYMetros(),
+            medicao.desvioPadraoThetaRad()
+        );
+    }
+
     private void configurarComandosPadrao() {
         chassi.setDefaultCommand(
             DriveCommands.joystickDrive(
                 chassi,
+                headingController,
                 () -> -controleDriver.getLeftY(),
                 () -> -controleDriver.getLeftX(),
                 () -> -controleDriver.getRightX()
@@ -83,7 +101,7 @@ public class RobotContainer {
             Commands.run(
                 () -> elevador.atualizarEntradaOperador(
                     controleOperador.getHID().getPOV(),
-                    controleOperador.getRightTriggerAxis()
+                    controleOperador.getHID().getRightTriggerAxis()
                 ),
                 elevador
             )
@@ -101,7 +119,6 @@ public class RobotContainer {
         controleDriver.a().whileTrue(
             new AlinharComLimelight(vision, chassi)
         );
-
 
         controleOperador.leftBumper().onTrue(
             Commands.runOnce(
@@ -140,7 +157,10 @@ public class RobotContainer {
 
         controleDriver.start().onTrue(
             Commands.runOnce(
-                chassi::zerarOrientacaO,
+                () -> {
+                    chassi.zerarOrientacaoDriver();
+                    headingController.desativar();
+                },
                 chassi
             )
         );

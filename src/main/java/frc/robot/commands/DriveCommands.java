@@ -20,8 +20,11 @@ import frc.robot.subsystems.drive.control.HeadingController;
 public final class DriveCommands {
     private DriveCommands() {}
 
+    private static final double VELOCIDADE_MINIMA_HEADING_HOLD_MPS = 0.05;
+
     public static Command joystickDrive(
         Drive drive,
+        HeadingController headingController,
         DoubleSupplier frenteTras,
         DoubleSupplier lateral,
         DoubleSupplier rotacao
@@ -32,11 +35,9 @@ public final class DriveCommands {
         SlewRateLimiter limitadorY = new SlewRateLimiter(
             Constants.Chassi.ACELERACAO_MAXIMA_MPS2
         );
-        SlewRateLimiter limitadorRotacao = new SlewRateLimiter(
+        SlewRateLimiter limitadorRotacaoManual = new SlewRateLimiter(
             Constants.Chassi.ACELERACAO_ANGULAR_MAXIMA_RAD_S2
         );
-
-        HeadingController headingController = new HeadingController();
 
         return Commands.run(
             () -> {
@@ -58,9 +59,14 @@ public final class DriveCommands {
                 );
 
                 boolean pilotoQuerGirar = Math.abs(comandoRotacao) > 1e-6;
-                double velocidadeAngularDesejada;
+                boolean roboEstaTransladando =
+                    Math.hypot(velocidadeX, velocidadeY)
+                        > VELOCIDADE_MINIMA_HEADING_HOLD_MPS;
+
+                double velocidadeAngular;
 
                 if (pilotoQuerGirar) {
+                    // O motorista sempre tem prioridade sobre o HeadingController.
                     headingController.desativar();
 
                     comandoRotacao = Math.copySign(
@@ -68,19 +74,39 @@ public final class DriveCommands {
                         comandoRotacao
                     );
 
-                    velocidadeAngularDesejada =
-                        comandoRotacao * Constants.Chassi.VELOCIDADE_ANGULAR_MAXIMA_RAD_S;
-                } else {
+                    double omegaManual =
+                        comandoRotacao
+                            * Constants.Chassi.VELOCIDADE_ANGULAR_MAXIMA_RAD_S;
+
+                    velocidadeAngular =
+                        limitadorRotacaoManual.calculate(omegaManual);
+
+                } else if (roboEstaTransladando) {
+                    // Vale para frente, tras, esquerda, direita e diagonal.
+                    // Quando começa a transladar sem giro manual, a orientacao
+                    // atual vira a referencia de reta.
                     if (!headingController.estaAtivo()) {
-                        headingController.segurarHeadingAtual(drive.getHeading());
+                        limitadorRotacaoManual.reset(0.0);
+                        headingController.segurarHeadingAtual(
+                            drive.getRotation()
+                        );
                     }
 
-                    velocidadeAngularDesejada =
-                        headingController.calcular(drive.getHeading());
+                    // O PID corrige apenas desvios de yaw enquanto translada.
+                    velocidadeAngular = headingController.calcular(
+                        drive.getRotation()
+                    );
+
+                } else {
+                    // Parado e sem giro manual: nao tenta procurar angulo.
+                    headingController.desativar();
+                    limitadorRotacaoManual.reset(0.0);
+                    velocidadeAngular = 0.0;
                 }
 
-                double velocidadeAngular = limitadorRotacao.calculate(
-                    velocidadeAngularDesejada
+                headingController.atualizarDashboard(
+                    drive.getRotation(),
+                    velocidadeAngular
                 );
 
                 Logger.recordOutput(
@@ -88,20 +114,28 @@ public final class DriveCommands {
                     headingController.estaAtivo()
                 );
                 Logger.recordOutput(
+                    "Drive/HeadingController/Transladando",
+                    roboEstaTransladando
+                );
+                Logger.recordOutput(
+                    "Drive/HeadingController/GiroManual",
+                    pilotoQuerGirar
+                );
+                Logger.recordOutput(
                     "Drive/HeadingController/AlvoGraus",
                     headingController.getHeadingAlvo().getDegrees()
                 );
                 Logger.recordOutput(
                     "Drive/HeadingController/AtualGraus",
-                    drive.getHeading().getDegrees()
+                    drive.getRotation().getDegrees()
                 );
                 Logger.recordOutput(
                     "Drive/HeadingController/ErroGraus",
                     Math.toDegrees(headingController.getErroRad())
                 );
                 Logger.recordOutput(
-                    "Drive/HeadingController/OmegaDesejadoRadS",
-                    velocidadeAngularDesejada
+                    "Drive/HeadingController/OmegaAplicadoRadS",
+                    velocidadeAngular
                 );
 
                 drive.runVelocity(
@@ -118,7 +152,7 @@ public final class DriveCommands {
             headingController.desativar();
             limitadorX.reset(0.0);
             limitadorY.reset(0.0);
-            limitadorRotacao.reset(0.0);
+            limitadorRotacaoManual.reset(0.0);
             drive.stop();
         });
     }

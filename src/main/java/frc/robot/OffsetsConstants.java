@@ -7,11 +7,8 @@ import edu.wpi.first.units.measure.Angle;
 
 public final class OffsetsConstants {
 
-    public static final class Driver {
-        public static final double FRENTE_GRAUS = -90.0; //FINALMENTE CONSEGUIII!!!
+    public static final double FRENTE_GRAUS = -90.0;
 
-        private Driver() {}
-    }
     public static final class Swerve {
 
         /* CONSTANTES CERTAS QUE DÃO QUASE CERTAS

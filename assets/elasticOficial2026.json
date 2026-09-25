@@ -767,6 +767,246 @@
         ],
         "containers": []
       }
+    },
+    {
+      "name": "Heading Tuning",
+      "grid_layout": {
+        "layouts": [
+          {
+            "title": "PID + Limites",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 512.0,
+            "height": 768.0,
+            "type": "List Layout",
+            "properties": {
+              "label_position": "TOP"
+            },
+            "children": [
+              {
+                "title": "kP",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Number Slider",
+                "properties": {
+                  "topic": "/SmartDashboard/HeadingTuning/kP",
+                  "period": 0.02,
+                  "data_type": "double",
+                  "min_value": 0.0,
+                  "max_value": 10.0,
+                  "divisions": 200,
+                  "update_continuously": true
+                }
+              },
+              {
+                "title": "kI",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Number Slider",
+                "properties": {
+                  "topic": "/SmartDashboard/HeadingTuning/kI",
+                  "period": 0.02,
+                  "data_type": "double",
+                  "min_value": 0.0,
+                  "max_value": 1.0,
+                  "divisions": 200,
+                  "update_continuously": true
+                }
+              },
+              {
+                "title": "kD",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Number Slider",
+                "properties": {
+                  "topic": "/SmartDashboard/HeadingTuning/kD",
+                  "period": 0.02,
+                  "data_type": "double",
+                  "min_value": 0.0,
+                  "max_value": 2.0,
+                  "divisions": 200,
+                  "update_continuously": true
+                }
+              },
+              {
+                "title": "MaxCorrection (deg/s)",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Number Slider",
+                "properties": {
+                  "topic": "/SmartDashboard/HeadingTuning/MaxCorrectionDegPerSec",
+                  "period": 0.02,
+                  "data_type": "double",
+                  "min_value": 0.0,
+                  "max_value": 360.0,
+                  "divisions": 180,
+                  "update_continuously": true
+                }
+              },
+              {
+                "title": "PositionTolerance (deg)",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Number Slider",
+                "properties": {
+                  "topic": "/SmartDashboard/HeadingTuning/PositionToleranceDeg",
+                  "period": 0.02,
+                  "data_type": "double",
+                  "min_value": 0.05,
+                  "max_value": 5.0,
+                  "divisions": 100,
+                  "update_continuously": true
+                }
+              },
+              {
+                "title": "VelocityTolerance (deg/s)",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Number Slider",
+                "properties": {
+                  "topic": "/SmartDashboard/HeadingTuning/VelocityToleranceDegPerSec",
+                  "period": 0.02,
+                  "data_type": "double",
+                  "min_value": 0.1,
+                  "max_value": 30.0,
+                  "divisions": 120,
+                  "update_continuously": true
+                }
+              }
+            ]
+          },
+          {
+            "title": "Telemetria",
+            "x": 512.0,
+            "y": 0.0,
+            "width": 384.0,
+            "height": 768.0,
+            "type": "List Layout",
+            "properties": {
+              "label_position": "TOP"
+            },
+            "children": [
+              {
+                "title": "Active",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Boolean Box",
+                "properties": {
+                  "topic": "/SmartDashboard/HeadingTuning/Active",
+                  "period": 0.02,
+                  "data_type": "boolean",
+                  "true_color": 4283215696,
+                  "false_color": 4294198070,
+                  "true_icon": "None",
+                  "false_icon": "None"
+                }
+              },
+              {
+                "title": "AtSetpoint",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Boolean Box",
+                "properties": {
+                  "topic": "/SmartDashboard/HeadingTuning/AtSetpoint",
+                  "period": 0.02,
+                  "data_type": "boolean",
+                  "true_color": 4283215696,
+                  "false_color": 4294198070,
+                  "true_icon": "None",
+                  "false_icon": "None"
+                }
+              },
+              {
+                "title": "Current Heading (deg)",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Text Display",
+                "properties": {
+                  "topic": "/SmartDashboard/HeadingTuning/CurrentHeadingDeg",
+                  "period": 0.02,
+                  "data_type": "double",
+                  "show_submit_button": false
+                }
+              },
+              {
+                "title": "Target Heading (deg)",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Text Display",
+                "properties": {
+                  "topic": "/SmartDashboard/HeadingTuning/TargetHeadingDeg",
+                  "period": 0.02,
+                  "data_type": "double",
+                  "show_submit_button": false
+                }
+              },
+              {
+                "title": "Error (deg)",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Text Display",
+                "properties": {
+                  "topic": "/SmartDashboard/HeadingTuning/ErrorDeg",
+                  "period": 0.02,
+                  "data_type": "double",
+                  "show_submit_button": false
+                }
+              },
+              {
+                "title": "PID Output (deg/s)",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Text Display",
+                "properties": {
+                  "topic": "/SmartDashboard/HeadingTuning/PIDOutputDegPerSec",
+                  "period": 0.02,
+                  "data_type": "double",
+                  "show_submit_button": false
+                }
+              },
+              {
+                "title": "Applied Omega (deg/s)",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Text Display",
+                "properties": {
+                  "topic": "/SmartDashboard/HeadingTuning/AppliedOmegaDegPerSec",
+                  "period": 0.02,
+                  "data_type": "double",
+                  "show_submit_button": false
+                }
+              }
+            ]
+          }
+        ],
+        "containers": []
+      }
     }
   ]
 }

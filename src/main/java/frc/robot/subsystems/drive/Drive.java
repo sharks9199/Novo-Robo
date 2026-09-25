@@ -10,6 +10,7 @@ import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -46,7 +47,7 @@ public class Drive extends SubsystemBase {
     );
 
     private Rotation2d rawGyroRotation = new Rotation2d();
-    private Rotation2d driverGyroOffset = Rotation2d.fromDegrees(OffsetsConstants.Driver.FRENTE_GRAUS);
+    private Rotation2d driverGyroOffset = Rotation2d.fromDegrees(OffsetsConstants.FRENTE_GRAUS);
     private SwerveModulePosition[] lastModulePositions = {
         new SwerveModulePosition(),
         new SwerveModulePosition(),
@@ -93,9 +94,18 @@ public class Drive extends SubsystemBase {
         );
     }
     
-    public void zerarOrientacaO(){
+    /**
+     * Define a orientacao atual como zero somente para o driver.
+     * A pose global do PoseEstimator continua intacta, portanto odometria
+     * e visao continuam referenciadas ao campo.
+     */
+    public void zerarOrientacaoDriver() {
+        driverGyroOffset = getPose().getRotation();
+    }
 
-        poseEstimator.resetRotation(Rotation2d.kZero);
+    // Alias mantido para chamadas antigas.
+    public void zerarOrientacaO() {
+        zerarOrientacaoDriver();
     }
 
     @Override
@@ -198,7 +208,46 @@ public class Drive extends SubsystemBase {
     }
 
     public Rotation2d getHeading() {
+        return getPose().getRotation();
+    }
+
+    public Rotation2d getRawGyroRotation() {
         return rawGyroRotation;
+    }
+
+    public double getYawVelocityRadPerSec() {
+        return gyroInputs.yawVelocityRadPerSec;
+    }
+
+    public Rotation2d adicionarMedicaoVisao(
+        Pose2d poseVisao,
+        double timestampSegundos,
+        double desvioPadraoXMetros,
+        double desvioPadraoYMetros,
+        double desvioPadraoThetaRad
+    ) {
+        Rotation2d headingAntes = getPose().getRotation();
+
+        poseEstimator.addVisionMeasurement(
+            poseVisao,
+            timestampSegundos,
+            VecBuilder.fill(
+                desvioPadraoXMetros,
+                desvioPadraoYMetros,
+                desvioPadraoThetaRad
+            )
+        );
+
+        Rotation2d headingDepois = getPose().getRotation();
+        Rotation2d correcaoHeading = headingDepois.minus(headingAntes);
+
+        Logger.recordOutput("Odometry/VisionPose", poseVisao);
+        Logger.recordOutput(
+            "Odometry/VisionHeadingCorrectionDeg",
+            correcaoHeading.getDegrees()
+        );
+
+        return correcaoHeading;
     }
 
     @AutoLogOutput(key = "Odometry/Robot")

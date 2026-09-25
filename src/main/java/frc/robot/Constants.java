@@ -44,27 +44,45 @@ public final class Constants {
         private Chassi() {}
     }
 
-
-
-
-
-
-    //tomboly
     public static final class Heading {
         public static final double KP = 5.0;
         public static final double KI = 0.0;
-        public static final double KD = 0.35;
+        public static final double KD = 0.15;
 
         public static final double VELOCIDADE_CORRECAO_MAXIMA_RAD_S =
             Units.degreesToRadians(180.0);
 
         public static final double TOLERANCIA_POSICAO_RAD =
-            Units.degreesToRadians(0.5);
+            Units.degreesToRadians(0.75);
 
         public static final double TOLERANCIA_VELOCIDADE_RAD_S =
-            Units.degreesToRadians(3.0);
+            Units.degreesToRadians(5.0);
 
         private Heading() {}
+    }
+
+    public static final class Vision {
+        public static final String NOME_LIMELIGHT = "limelight-sharks";
+
+        public static final double DISTANCIA_MAXIMA_VISAO_METROS = 6.0;
+        public static final double VELOCIDADE_ANGULAR_MAXIMA_PARA_VISAO_RAD_S =
+            Units.degreesToRadians(540.0);
+
+        public static final double DISTANCIA_MAXIMA_TAG_UNICA_HEADING_METROS = 2.5;
+        public static final double AMBIGUIDADE_MAXIMA_TAG_UNICA_HEADING = 0.15;
+
+        public static final double MT1_DESVIO_XY_MULTIPLAS_TAGS_METROS = 0.45;
+        public static final double MT1_DESVIO_XY_TAG_UNICA_METROS = 0.80;
+        public static final double MT1_DESVIO_THETA_MULTIPLAS_TAGS_RAD =
+            Units.degreesToRadians(4.0);
+        public static final double MT1_DESVIO_THETA_TAG_UNICA_RAD =
+            Units.degreesToRadians(10.0);
+
+        public static final double MT2_DESVIO_XY_MULTIPLAS_TAGS_METROS = 0.30;
+        public static final double MT2_DESVIO_XY_TAG_UNICA_METROS = 0.70;
+        public static final double MT2_DESVIO_THETA_RAD = 1_000_000.0;
+
+        private Vision() {}
     }
 
     private Constants() {}

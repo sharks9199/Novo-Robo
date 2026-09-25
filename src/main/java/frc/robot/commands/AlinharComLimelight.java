@@ -29,21 +29,25 @@ public class AlinharComLimelight extends Command {
             return;
         }
 
-        double erroHorizontalGraus = vision.pegarTx() - OffsetsConstants.Limelight.TX_ALVO_GRAUS;
+        double erroHorizontalGraus = vision.pegarTx()
+            - OffsetsConstants.Limelight.TX_ALVO_GRAUS;
 
         if (Math.abs(erroHorizontalGraus) <= toleranciaGraus) {
             drive.stop();
             return;
         }
 
-        double velocidadeAngular = MathUtil.clamp(erroHorizontalGraus * kP * sentidoRotacao, -velocidadeAngularMaximaRadS, velocidadeAngularMaximaRadS
+        double velocidadeAngular = MathUtil.clamp(
+            erroHorizontalGraus * kP * sentidoRotacao,
+            -velocidadeAngularMaximaRadS,
+            velocidadeAngularMaximaRadS
         );
 
-        drive.runVelocity(new ChassisSpeeds(0.0, 0.0, -velocidadeAngular));
+        drive.runVelocity(new ChassisSpeeds(0.0, 0.0, velocidadeAngular));
     }
 
     @Override
     public void end(boolean interrupted) {
-        drive.stop();   
+        drive.stop();
     }
 }
