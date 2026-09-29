@@ -19,10 +19,6 @@ public final class DirectionalInputProcessor {
     private SnapAxis snapAxis = SnapAxis.NONE;
 
     public Translation2d process(double longitudinal, double lateral) {
-        return process(longitudinal, lateral, Constants.ControlesDrive.EXPO_TRANSLACAO);
-    }
-
-    public Translation2d process(double longitudinal, double lateral, double expo) {
         atualizarSnap(longitudinal, lateral);
 
         double x = longitudinal;
@@ -46,7 +42,7 @@ public final class DirectionalInputProcessor {
         );
         double magnitudeModelada = Math.pow(
             magnitudeSemDeadband,
-            Math.max(1.0, expo)
+            Constants.ControlesDrive.EXPO_TRANSLACAO
         );
 
         return new Translation2d(x / rawMagnitude, y / rawMagnitude)

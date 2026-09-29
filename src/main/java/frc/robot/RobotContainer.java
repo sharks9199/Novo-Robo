@@ -1,11 +1,15 @@
 package frc.robot;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
+
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.AlinharComLimelight;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -16,7 +20,6 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOComp;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.control.HeadingController;
-import frc.robot.subsystems.drive.control.ModoRetoController;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.Elevator.Preset;
 import frc.robot.subsystems.elevator.ElevatorIOReal;
@@ -33,9 +36,9 @@ public class RobotContainer {
 
     private final Drive chassi = criarChassi();
     private final HeadingController headingController = new HeadingController();
-    private final ModoRetoController modoReto = new ModoRetoController();
     private final Elevator elevador = criarElevador();
     private final Vision vision;
+    private final SendableChooser<Command> seletorAutonomo;
 
     public RobotContainer() {
         vision = new Vision(
@@ -45,9 +48,13 @@ public class RobotContainer {
             this::aplicarMedicaoVisao
         );
 
+        registrarComandosNomeados();
+        // Precisa vir depois do AutoBuilder (configurado no Drive) e dos comandos nomeados.
+        seletorAutonomo = criarSeletorAutonomo();
+        SmartDashboard.putData("Autonomo/Seletor", seletorAutonomo);
+
         configurarComandosPadrao();
         configurarBotoes();
-        configurarSysIdElastic();
     }
 
     private Drive criarChassi() {
@@ -94,12 +101,49 @@ public class RobotContainer {
         headingController.aplicarCorrecaoReferencia(correcaoHeading);
     }
 
+    private SendableChooser<Command> criarSeletorAutonomo() {
+        try {
+            return AutoBuilder.buildAutoChooser();
+        } catch (Exception e) {
+            DriverStation.reportError(
+                "Falha ao criar o seletor de autonomo: " + e.getMessage(),
+                e.getStackTrace()
+            );
+            SendableChooser<Command> vazio = new SendableChooser<>();
+            vazio.setDefaultOption("Nenhum", Commands.none());
+            return vazio;
+        }
+    }
+
+    /** Comandos que podem ser usados como "Named Command" nos autos do PathPlanner. */
+    private void registrarComandosNomeados() {
+        NamedCommands.registerCommand(
+            "ElevadorH0",
+            Commands.runOnce(() -> elevador.irParaPreset(Preset.H0), elevador)
+        );
+        NamedCommands.registerCommand(
+            "ElevadorH1",
+            Commands.runOnce(() -> elevador.irParaPreset(Preset.H1), elevador)
+        );
+        NamedCommands.registerCommand(
+            "ElevadorH2",
+            Commands.runOnce(() -> elevador.irParaPreset(Preset.H2), elevador)
+        );
+        NamedCommands.registerCommand(
+            "ElevadorH3",
+            Commands.runOnce(() -> elevador.irParaPreset(Preset.H3), elevador)
+        );
+        NamedCommands.registerCommand(
+            "ElevadorParar",
+            Commands.runOnce(elevador::cancelarTudo, elevador)
+        );
+    }
+
     private void configurarComandosPadrao() {
         chassi.setDefaultCommand(
             DriveCommands.joystickDrive(
                 chassi,
                 headingController,
-                modoReto,
                 () -> -controleDriver.getLeftY(),
                 () -> -controleDriver.getLeftX(),
                 () -> -controleDriver.getRightX()
@@ -125,13 +169,6 @@ public class RobotContainer {
             )
         );
 
-        // BOTAO PRINCIPAL DO MODO RETO:
-        // A alterna todo o pacote avancado ON/OFF.
-        controleDriver.a().onTrue(
-            Commands.runOnce(this::alternarModoReto)
-        );
-
-        // O A agora pertence ao Modo RETO. O alinhamento da Limelight foi preservado no X.
         controleDriver.x().whileTrue(
             new AlinharComLimelight(vision, chassi)
         );
@@ -176,69 +213,14 @@ public class RobotContainer {
         );
     }
 
-    /**
-     * Funcao principal do botao A.
-     * Liga/desliga o Modo RETO inteiro. Ao ligar, a orientacao atual vira 0°
-     * e o HeadingController passa a trabalhar nesse novo referencial.
-     */
-    private void alternarModoReto() {
-        boolean ativou = modoReto.toggle();
-
-        if (ativou) {
-            zerarReferenciaDriver();
-        } else {
-            headingController.desativar();
-        }
-
-        SmartDashboard.putBoolean("ModoReto/Enabled", ativou);
-    }
-
     private void zerarReferenciaDriver() {
         chassi.zerarOrientacaO();
-        if (modoReto.estaLigado()) {
-            headingController.definirHeading(
-                Rotation2d.kZero,
-                chassi.getRotation(),
-                chassi.getYawVelocityRadPerSec()
-            );
-        }
-    }
-
-    private void configurarSysIdElastic() {
-        SmartDashboard.putData(
-            "SysId/Quasistatic Forward",
-            prepararSysId().andThen(
-                chassi.sysIdQuasistatic(SysIdRoutine.Direction.kForward)
-            )
-        );
-        SmartDashboard.putData(
-            "SysId/Quasistatic Reverse",
-            prepararSysId().andThen(
-                chassi.sysIdQuasistatic(SysIdRoutine.Direction.kReverse)
-            )
-        );
-        SmartDashboard.putData(
-            "SysId/Dynamic Forward",
-            prepararSysId().andThen(
-                chassi.sysIdDynamic(SysIdRoutine.Direction.kForward)
-            )
-        );
-        SmartDashboard.putData(
-            "SysId/Dynamic Reverse",
-            prepararSysId().andThen(
-                chassi.sysIdDynamic(SysIdRoutine.Direction.kReverse)
-            )
-        );
-    }
-
-    private Command prepararSysId() {
-        return Commands.runOnce(() -> {
-            modoReto.desativar();
-            headingController.desativar();
-        });
+        // O heading é recapturado sozinho na próxima translação.
+        headingController.desativar();
     }
 
     public Command getAutonomousCommand() {
-        return Commands.none().withName("Sem autônomo");
+        Command selecionado = seletorAutonomo.getSelected();
+        return selecionado != null ? selecionado : Commands.none();
     }
 }

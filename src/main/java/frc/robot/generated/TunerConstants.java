@@ -38,9 +38,9 @@ import frc.robot.OffsetsConstants;
  */
 public final class TunerConstants {
     private static final Slot0Configs GANHOS_DIRECAO = new Slot0Configs()
-        .withKP(20.0)
+        .withKP(25.0)
         .withKI(0.0)
-        .withKD(2)
+        .withKD(2.5)
         .withKS(0.0)
         .withKV(0.12)
         .withKA(0.0)
@@ -53,7 +53,7 @@ public final class TunerConstants {
         .withKI(0.0)
         .withKD(0.08)
         .withKS(0.24)
-        .withKV(0.85);
+        .withKV(0.12);
 
     private static final ClosedLoopOutputType SAIDA_DIRECAO =
         ClosedLoopOutputType.Voltage;
@@ -89,7 +89,7 @@ public final class TunerConstants {
 
     /** Velocidade física aproximada a 12 V, usada pelo modelo do módulo. */
     public static final LinearVelocity VELOCIDADE_FISICA_A_12V =
-        MetersPerSecond.of(4.5);
+        MetersPerSecond.of(5);
 
     private static final double RELACAO_ACOPLAMENTO = 25.0 / 7.0;
     private static final double REDUCAO_TRACAO = 6.75;
