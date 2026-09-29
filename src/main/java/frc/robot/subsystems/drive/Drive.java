@@ -1,5 +1,6 @@
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.Degrees;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -39,44 +40,40 @@ import frc.robot.OffsetsConstants;
 import frc.robot.generated.TunerConstants;
 
 public class Drive extends SubsystemBase {
-    static final double ODOMETRY_FREQUENCY =
-        TunerConstants.CAN_BUS.isNetworkFD() ? 250.0 : 100.0;
+    static final double ODOMETRY_FREQUENCY = TunerConstants.CAN_BUS.isNetworkFD() ? 250.0 : 100.0;
 
     static final Lock odometryLock = new ReentrantLock();
 
     private final GyroIO gyroIO;
     private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
+    private final Rotation2d hardwareGyroOffset = Rotation2d.fromDegrees(OffsetsConstants.Pigeon.YAW.in(Degrees));
     private final Module[] modules = new Module[4];
     private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
-        getModuleTranslations()
-    );
+            getModuleTranslations());
     private final Alert gyroDisconnectedAlert = new Alert(
-        "Gyro desconectado. O chassi está usando a cinemática como reserva.",
-        AlertType.kError
-    );
+            "Gyro desconectado. O chassi está usando a cinemática como reserva.",
+            AlertType.kError);
 
     private Rotation2d rawGyroRotation = new Rotation2d();
     private Rotation2d driverGyroOffset = Rotation2d.fromDegrees(OffsetsConstants.Driver.FRENTE_GRAUS);
     private SwerveModulePosition[] lastModulePositions = {
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition()
+            new SwerveModulePosition(),
+            new SwerveModulePosition(),
+            new SwerveModulePosition(),
+            new SwerveModulePosition()
     };
     private final SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(
-        kinematics,
-        rawGyroRotation,
-        lastModulePositions,
-        new Pose2d()
-    );
+            kinematics,
+            rawGyroRotation,
+            lastModulePositions,
+            new Pose2d());
 
     public Drive(
-        GyroIO gyroIO,
-        ModuleIO frontLeft,
-        ModuleIO frontRight,
-        ModuleIO backLeft,
-        ModuleIO backRight
-    ) {
+            GyroIO gyroIO,
+            ModuleIO frontLeft,
+            ModuleIO frontRight,
+            ModuleIO backLeft,
+            ModuleIO backRight) {
         this.gyroIO = gyroIO;
         modules[0] = new Module(frontLeft, 0, TunerConstants.FrontLeft);
         modules[1] = new Module(frontRight, 1, TunerConstants.FrontRight);
@@ -84,9 +81,8 @@ public class Drive extends SubsystemBase {
         modules[3] = new Module(backRight, 3, TunerConstants.BackRight);
 
         HAL.report(
-            tResourceType.kResourceType_RobotDrive,
-            tInstances.kRobotDriveSwerve_AdvantageKit
-        );
+                tResourceType.kResourceType_RobotDrive,
+                tInstances.kRobotDriveSwerve_AdvantageKit);
         PhoenixOdometryThread.getInstance().start();
 
         try {
@@ -94,25 +90,21 @@ public class Drive extends SubsystemBase {
         } catch (Exception e) {
             // Falha no PathPlanner nunca pode derrubar o teleop.
             DriverStation.reportError(
-                "Falha ao configurar o autonomo: " + e.getMessage(),
-                e.getStackTrace()
-            );
+                    "Falha ao configurar o autonomo: " + e.getMessage(),
+                    e.getStackTrace());
         }
 
         SmartDashboard.putNumber(
-            "Chassi/Massa kg",
-            Constants.Chassi.MASSA_COM_BATERIA_E_BUMPERS_KG
-        );
+                "Chassi/Massa kg",
+                Constants.Chassi.MASSA_COM_BATERIA_E_BUMPERS_KG);
         SmartDashboard.putNumber(
-            "Chassi/Velocidade máxima mps",
-            Constants.Chassi.VELOCIDADE_MAXIMA_MPS
-        );
+                "Chassi/Velocidade máxima mps",
+                Constants.Chassi.VELOCIDADE_MAXIMA_MPS);
         SmartDashboard.putNumber(
-            "Chassi/Velocidade angular máxima radps",
-            Constants.Chassi.VELOCIDADE_ANGULAR_MAXIMA_RAD_S
-        );
+                "Chassi/Velocidade angular máxima radps",
+                Constants.Chassi.VELOCIDADE_ANGULAR_MAXIMA_RAD_S);
     }
-    
+
     /** Configura o AutoBuilder do PathPlanner (seguidor holonomico de trajetos). */
     private void configurarAutonomo() {
         DCMotor motorTracao = DCMotor.getKrakenX60Foc(1);
@@ -120,43 +112,35 @@ public class Drive extends SubsystemBase {
         double reducao = TunerConstants.FrontLeft.DriveMotorGearRatio;
 
         RobotConfig config = new RobotConfig(
-            Constants.Chassi.MASSA_COM_BATERIA_E_BUMPERS_KG,
-            Constants.Chassi.MOMENTO_INERCIA_ESTIMADO_KG_M2,
-            new ModuleConfig(
-                raioRoda,
-                motorTracao.freeSpeedRadPerSec / reducao * raioRoda,
-                Constants.Autonomo.COEFICIENTE_ATRITO_RODA,
-                motorTracao.withReduction(reducao),
-                Constants.Chassi.LIMITE_CORRENTE_TRACAO_AMPERES,
-                1
-            ),
-            getModuleTranslations()
-        );
+                Constants.Chassi.MASSA_COM_BATERIA_E_BUMPERS_KG,
+                Constants.Chassi.MOMENTO_INERCIA_ESTIMADO_KG_M2,
+                new ModuleConfig(
+                        raioRoda,
+                        motorTracao.freeSpeedRadPerSec / reducao * raioRoda,
+                        Constants.Autonomo.COEFICIENTE_ATRITO_RODA,
+                        motorTracao.withReduction(reducao),
+                        Constants.Chassi.LIMITE_CORRENTE_TRACAO_AMPERES,
+                        1),
+                getModuleTranslations());
 
         AutoBuilder.configure(
-            this::getPose,
-            this::setPose,
-            this::getChassisSpeeds,
-            (speeds, feedforwards) -> runVelocity(speeds),
-            new PPHolonomicDriveController(
-                new PIDConstants(Constants.Autonomo.KP_TRANSLACAO, 0.0, 0.0),
-                new PIDConstants(Constants.Autonomo.KP_ROTACAO, 0.0, 0.0)
-            ),
-            config,
-            () -> DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
-                == DriverStation.Alliance.Red,
-            this
-        );
+                this::getPose,
+                this::setPose,
+                this::getChassisSpeeds,
+                (speeds, feedforwards) -> runVelocity(speeds),
+                new PPHolonomicDriveController(
+                        new PIDConstants(Constants.Autonomo.KP_TRANSLACAO, 0.0, 0.0),
+                        new PIDConstants(Constants.Autonomo.KP_ROTACAO, 0.0, 0.0)),
+                config,
+                () -> DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red,
+                this);
 
         PathPlannerLogging.setLogActivePathCallback(
-            path -> Logger.recordOutput(
-                "Autonomo/Trajetoria",
-                path.toArray(new Pose2d[0])
-            )
-        );
+                path -> Logger.recordOutput(
+                        "Autonomo/Trajetoria",
+                        path.toArray(new Pose2d[0])));
         PathPlannerLogging.setLogTargetPoseCallback(
-            pose -> Logger.recordOutput("Autonomo/PoseAlvo", pose)
-        );
+                pose -> Logger.recordOutput("Autonomo/PoseAlvo", pose));
     }
 
     /** Redefine a pose do robo no campo (usado pelo autonomo ao iniciar). */
@@ -164,7 +148,7 @@ public class Drive extends SubsystemBase {
         poseEstimator.resetPosition(rawGyroRotation, lastModulePositions, pose);
     }
 
-    public void zerarOrientacaO(){
+    public void zerarOrientacaO() {
 
         poseEstimator.resetRotation(Rotation2d.kZero);
     }
@@ -193,58 +177,47 @@ public class Drive extends SubsystemBase {
 
         atualizarOdometria();
         gyroDisconnectedAlert.set(
-            !gyroInputs.connected && Constants.MODO_ATUAL != Constants.Mode.SIM
-        );
+                !gyroInputs.connected && Constants.MODO_ATUAL != Constants.Mode.SIM);
     }
 
     public void runVelocity(ChassisSpeeds speeds) {
         ChassisSpeeds velocidadesLimitadas = new ChassisSpeeds(
-            MathUtil.clamp(
-                speeds.vxMetersPerSecond,
-                -Constants.Chassi.VELOCIDADE_MAXIMA_MPS,
-                Constants.Chassi.VELOCIDADE_MAXIMA_MPS
-            ),
-            MathUtil.clamp(
-                speeds.vyMetersPerSecond,
-                -Constants.Chassi.VELOCIDADE_MAXIMA_MPS,
-                Constants.Chassi.VELOCIDADE_MAXIMA_MPS
-            ),
-            MathUtil.clamp(
-                speeds.omegaRadiansPerSecond,
-                -Constants.Chassi.VELOCIDADE_ANGULAR_MAXIMA_RAD_S,
-                Constants.Chassi.VELOCIDADE_ANGULAR_MAXIMA_RAD_S
-            )
-        );
+                MathUtil.clamp(
+                        speeds.vxMetersPerSecond,
+                        -Constants.Chassi.VELOCIDADE_MAXIMA_MPS,
+                        Constants.Chassi.VELOCIDADE_MAXIMA_MPS),
+                MathUtil.clamp(
+                        speeds.vyMetersPerSecond,
+                        -Constants.Chassi.VELOCIDADE_MAXIMA_MPS,
+                        Constants.Chassi.VELOCIDADE_MAXIMA_MPS),
+                MathUtil.clamp(
+                        speeds.omegaRadiansPerSecond,
+                        -Constants.Chassi.VELOCIDADE_ANGULAR_MAXIMA_RAD_S,
+                        Constants.Chassi.VELOCIDADE_ANGULAR_MAXIMA_RAD_S));
 
         ChassisSpeeds velocidadesDiscretas = ChassisSpeeds.discretize(
-            velocidadesLimitadas,
-            Constants.Chassi.PERIODO_CONTROLE_SEGUNDOS
-        );
+                velocidadesLimitadas,
+                Constants.Chassi.PERIODO_CONTROLE_SEGUNDOS);
 
         SwerveModuleState[] estadosDesejados;
-        if (
-            Math.abs(velocidadesDiscretas.vxMetersPerSecond) < 1e-9
-            && Math.abs(velocidadesDiscretas.vyMetersPerSecond) < 1e-9
-            && Math.abs(velocidadesDiscretas.omegaRadiansPerSecond) < 1e-9
-        ) {
+        if (Math.abs(velocidadesDiscretas.vxMetersPerSecond) < 1e-9
+                && Math.abs(velocidadesDiscretas.vyMetersPerSecond) < 1e-9
+                && Math.abs(velocidadesDiscretas.omegaRadiansPerSecond) < 1e-9) {
             SwerveModuleState[] estadosAtuais = getModuleStates();
             estadosDesejados = new SwerveModuleState[4];
             for (int i = 0; i < 4; i++) {
                 estadosDesejados[i] = new SwerveModuleState(
-                    0.0,
-                    estadosAtuais[i].angle
-                );
+                        0.0,
+                        estadosAtuais[i].angle);
             }
         } else {
             estadosDesejados = kinematics.toSwerveModuleStates(
-                velocidadesDiscretas
-            );
+                    velocidadesDiscretas);
         }
 
         SwerveDriveKinematics.desaturateWheelSpeeds(
-            estadosDesejados,
-            Constants.Chassi.VELOCIDADE_MAXIMA_MPS
-        );
+                estadosDesejados,
+                Constants.Chassi.VELOCIDADE_MAXIMA_MPS);
 
         Logger.recordOutput("SwerveStates/Setpoints", estadosDesejados);
         Logger.recordOutput("SwerveChassisSpeeds/Setpoints", velocidadesDiscretas);
@@ -281,32 +254,28 @@ public class Drive extends SubsystemBase {
     }
 
     public Rotation2d adicionarMedicaoVisao(
-        Pose2d poseVisao,
-        double timestampSegundos,
-        double desvioPadraoXMetros,
-        double desvioPadraoYMetros,
-        double desvioPadraoThetaRad
-    ) {
+            Pose2d poseVisao,
+            double timestampSegundos,
+            double desvioPadraoXMetros,
+            double desvioPadraoYMetros,
+            double desvioPadraoThetaRad) {
         Rotation2d headingAntes = getPose().getRotation();
 
         poseEstimator.addVisionMeasurement(
-            poseVisao,
-            timestampSegundos,
-            VecBuilder.fill(
-                desvioPadraoXMetros,
-                desvioPadraoYMetros,
-                desvioPadraoThetaRad
-            )
-        );
+                poseVisao,
+                timestampSegundos,
+                VecBuilder.fill(
+                        desvioPadraoXMetros,
+                        desvioPadraoYMetros,
+                        desvioPadraoThetaRad));
 
         Rotation2d headingDepois = getPose().getRotation();
         Rotation2d correcaoHeading = headingDepois.minus(headingAntes);
 
         Logger.recordOutput("Odometry/VisionPose", poseVisao);
         Logger.recordOutput(
-            "Odometry/VisionHeadingCorrectionDeg",
-            correcaoHeading.getDegrees()
-        );
+                "Odometry/VisionHeadingCorrectionDeg",
+                correcaoHeading.getDegrees());
 
         return correcaoHeading;
     }
@@ -323,10 +292,10 @@ public class Drive extends SubsystemBase {
 
     public static Translation2d[] getModuleTranslations() {
         return new Translation2d[] {
-            new Translation2d(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
-            new Translation2d(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY),
-            new Translation2d(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
-            new Translation2d(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)
+                new Translation2d(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
+                new Translation2d(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY),
+                new Translation2d(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
+                new Translation2d(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)
         };
     }
 
@@ -339,7 +308,7 @@ public class Drive extends SubsystemBase {
 
             for (int modulo = 0; modulo < modules.length; modulo++) {
                 SwerveModulePosition[] posicoesModulo = modules[modulo]
-                    .getOdometryPositions();
+                        .getOdometryPositions();
 
                 if (amostra >= posicoesModulo.length) {
                     return;
@@ -347,30 +316,26 @@ public class Drive extends SubsystemBase {
 
                 posicoes[modulo] = posicoesModulo[amostra];
                 deltas[modulo] = new SwerveModulePosition(
-                    posicoes[modulo].distanceMeters
-                        - lastModulePositions[modulo].distanceMeters,
-                    posicoes[modulo].angle
-                );
+                        posicoes[modulo].distanceMeters
+                                - lastModulePositions[modulo].distanceMeters,
+                        posicoes[modulo].angle);
                 lastModulePositions[modulo] = posicoes[modulo];
             }
 
-            if (
-                gyroInputs.connected
-                && amostra < gyroInputs.odometryYawPositions.length
-            ) {
-                rawGyroRotation = gyroInputs.odometryYawPositions[amostra];
+            if (gyroInputs.connected
+                    && amostra < gyroInputs.odometryYawPositions.length) {
+                rawGyroRotation = gyroInputs.odometryYawPositions[amostra].plus(hardwareGyroOffset);
+
             } else {
                 Twist2d twist = kinematics.toTwist2d(deltas);
                 rawGyroRotation = rawGyroRotation.plus(
-                    new Rotation2d(twist.dtheta)
-                );
+                        new Rotation2d(twist.dtheta));
             }
 
             poseEstimator.updateWithTime(
-                timestamps[amostra],
-                rawGyroRotation,
-                posicoes
-            );
+                    timestamps[amostra],
+                    rawGyroRotation,
+                    posicoes);
         }
     }
 

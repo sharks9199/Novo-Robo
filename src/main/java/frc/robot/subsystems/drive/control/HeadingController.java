@@ -8,7 +8,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 
-/** Heading hold / snap profiled, com tuning em tempo real pelo Elastic. */
 public final class HeadingController {
     private static final String DASHBOARD = "HeadingTuning/";
 

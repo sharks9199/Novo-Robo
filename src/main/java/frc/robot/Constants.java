@@ -32,7 +32,6 @@ public final class Constants {
 
         public static final double VELOCIDADE_MAXIMA_MPS = 5;//Olha, eu (Tomboly), decidi o seguinte: velocidade / tempo = 2.5
 
-        /** Tempo para sair do repouso e chegar na velocidade maxima (translacao). */
         public static final double TEMPO_ACELERACAO_SEGUNDOS = 1.5;
         /** Derivada: 6,5 m/s em 1,5 s = ~4,33 m/s². */
         public static final double ACELERACAO_MAXIMA_MPS2 =
@@ -51,15 +50,10 @@ public final class Constants {
 
 
     public static final class ControlesDrive {
-        /** Deadband radial global do stick esquerdo. */
         public static final double DEADBAND_RADIAL = 0.06;
-        /** Potencia aplicada na magnitude do stick (2 = resposta quadratica). */
         public static final double EXPO_TRANSLACAO = 2.0;
-        /** Eixo principal minimo para considerar snap cardinal. */
         public static final double EIXO_PRINCIPAL_MINIMO_SNAP = 0.18;
-        /** Entra no snap quando o eixo secundario esta abaixo deste valor. */
         public static final double EIXO_SECUNDARIO_ENTRAR_SNAP = 0.10;
-        /** Histerese: so sai do snap quando ultrapassa este valor. */
         public static final double EIXO_SECUNDARIO_SAIR_SNAP = 0.14;
 
         private ControlesDrive() {}
@@ -84,13 +78,10 @@ public final class Constants {
         private Heading() {}
     }
 
-    /** Ganhos e parametros fisicos usados pelo PathPlanner no autonomo. */
     public static final class Autonomo {
-        // Ponto de partida para tuning: sobem se o robo fica atrasado no trajeto.
         public static final double KP_TRANSLACAO = 5.0;
         public static final double KP_ROTACAO = 5.0;
 
-        // Coeficiente de atrito roda/carpete. Confirmar com o robo real.
         public static final double COEFICIENTE_ATRITO_RODA = 1.1;
 
         private Autonomo() {}

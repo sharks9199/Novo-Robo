@@ -25,7 +25,7 @@ public final class OffsetsConstants {
 
         */
 
-        //CONSTANTES NOVAS AJUSTADAS A
+        //CONSTANTES NOVAS AJUSTADAS 
         public static final Angle FRENTE_ESQUERDA = Rotations.of(-0.13671875); // Phoenix Tuner 25/09
         public static final Angle FRENTE_DIREITA = Rotations.of(0.29541015625); // Phoenix Tuner 25/09
         public static final Angle TRAS_ESQUERDA = Rotations.of(0.199462890625); // Phoenix Tuner 25/09
@@ -42,7 +42,7 @@ public final class OffsetsConstants {
     }
 
     public static final class Pigeon {
-        public static final Angle YAW = Degrees.of(0.0);
+        public static final Angle YAW = Degrees.of(-90.0);
         public static final Angle PITCH = Degrees.of(0.0);
         public static final Angle ROLL = Degrees.of(0.0);
 

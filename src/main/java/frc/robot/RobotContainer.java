@@ -17,7 +17,7 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
-import frc.robot.subsystems.drive.ModuleIOComp;
+import frc.robot.subsystems.drive.ModuleIOReal;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.control.HeadingController;
 import frc.robot.subsystems.elevator.Elevator;
@@ -49,7 +49,6 @@ public class RobotContainer {
         );
 
         registrarComandosNomeados();
-        // Precisa vir depois do AutoBuilder (configurado no Drive) e dos comandos nomeados.
         seletorAutonomo = criarSeletorAutonomo();
         SmartDashboard.putData("Autonomo/Seletor", seletorAutonomo);
 
@@ -61,10 +60,10 @@ public class RobotContainer {
         return switch (Constants.MODO_ATUAL) {
             case REAL -> new Drive(
                 new GyroIOPigeon2(),
-                new ModuleIOComp(TunerConstants.FrontLeft),
-                new ModuleIOComp(TunerConstants.FrontRight),
-                new ModuleIOComp(TunerConstants.BackLeft),
-                new ModuleIOComp(TunerConstants.BackRight)
+                new ModuleIOReal(TunerConstants.FrontLeft),
+                new ModuleIOReal(TunerConstants.FrontRight),
+                new ModuleIOReal(TunerConstants.BackLeft),
+                new ModuleIOReal(TunerConstants.BackRight)
             );
             case SIM -> new Drive(
                 new GyroIO() {},
@@ -115,7 +114,6 @@ public class RobotContainer {
         }
     }
 
-    /** Comandos que podem ser usados como "Named Command" nos autos do PathPlanner. */
     private void registrarComandosNomeados() {
         NamedCommands.registerCommand(
             "ElevadorH0",
@@ -215,7 +213,6 @@ public class RobotContainer {
 
     private void zerarReferenciaDriver() {
         chassi.zerarOrientacaO();
-        // O heading é recapturado sozinho na próxima translação.
         headingController.desativar();
     }
 

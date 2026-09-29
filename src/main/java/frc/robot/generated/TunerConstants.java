@@ -85,7 +85,11 @@ public final class TunerConstants {
 
     private static final CANcoderConfiguration CONFIGURACAO_ENCODER =
         new CANcoderConfiguration();
-    public static final Pigeon2Configuration CONFIGURACAO_PIGEON = new Pigeon2Configuration().withMountPose(new MountPoseConfigs().withMountPoseYaw(OffsetsConstants.Pigeon.YAW).withMountPosePitch(OffsetsConstants.Pigeon.PITCH).withMountPoseRoll(OffsetsConstants.Pigeon.ROLL));
+    public static final Pigeon2Configuration CONFIGURACAO_PIGEON = new Pigeon2Configuration()
+    .withMountPose(new MountPoseConfigs()
+    .withMountPoseYaw(OffsetsConstants.Pigeon.YAW)
+    .withMountPosePitch(OffsetsConstants.Pigeon.PITCH)
+    .withMountPoseRoll(OffsetsConstants.Pigeon.ROLL));
 
     /** Velocidade física aproximada a 12 V, usada pelo modelo do módulo. */
     public static final LinearVelocity VELOCIDADE_FISICA_A_12V =

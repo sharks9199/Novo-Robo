@@ -37,7 +37,7 @@ import java.util.Queue;
  *
  * <p>Device configuration and other behaviors not exposed by TunerConstants can be customized here.
  */
-public class ModuleIOComp implements ModuleIO {
+public class ModuleIOReal implements ModuleIO {
   private final SwerveModuleConstants<
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
       constants;
@@ -84,7 +84,7 @@ private final PositionTorqueCurrentFOC positionTorqueCurrentRequest =
   private final Debouncer turnConnectedDebounce = new Debouncer(0.5);
   private final Debouncer turnEncoderConnectedDebounce = new Debouncer(0.5);
 
-  public ModuleIOComp(
+  public ModuleIOReal(
       SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
           constants) {
     this.constants = constants;
