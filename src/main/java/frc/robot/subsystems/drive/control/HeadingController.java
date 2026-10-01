@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 
 public final class HeadingController {
-    private static final String DASHBOARD = "HeadingTuning/";
+    private static final String DASHBOARD = "HeadingTuning/";//quero "tunar"
 
     private final ProfiledPIDController controller = new ProfiledPIDController(
         Constants.Heading.KP,
@@ -18,8 +18,8 @@ public final class HeadingController {
         new TrapezoidProfile.Constraints(
             Constants.Heading.VELOCIDADE_CORRECAO_MAXIMA_RAD_S,
             Constants.Heading.ACELERACAO_CORRECAO_MAXIMA_RAD_S2
-        ),
-        Constants.Chassi.PERIODO_CONTROLE_SEGUNDOS
+        ),//recomendação do silva
+        Constants.Chassi.PERIODO_CONTROLE_SEGUNDOS//0.02
     );
 
     private Rotation2d headingAlvo = Rotation2d.kZero;
@@ -42,6 +42,7 @@ public final class HeadingController {
     public HeadingController() {
         controller.enableContinuousInput(-Math.PI, Math.PI);
         controller.setTolerance(toleranciaPosicaoRad, toleranciaVelocidadeRadS);
+        //para eu lembra: precisei usar os dois argumentos. Um é a tolerancia da posição e o outro é da velocidade.
 
         SmartDashboard.setDefaultNumber(DASHBOARD + "kP", kP);
         SmartDashboard.setDefaultNumber(DASHBOARD + "kI", kI);
@@ -192,7 +193,7 @@ public final class HeadingController {
             10.0
         );
 
-        if (novoKP != kP || novoKI != kI || novoKD != kD) {
+        if (novoKP != kP || novoKI != kI || novoKD != kD) { // normalmente eu usava OR (python), mas em java é ||
             kP = novoKP;
             kI = novoKI;
             kD = novoKD;

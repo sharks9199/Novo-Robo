@@ -4,9 +4,12 @@ import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
@@ -18,14 +21,6 @@ import frc.robot.subsystems.drive.control.TranslationSlewLimiter;
 public final class DriveCommands {
     private DriveCommands() {}
 
-    /**
-     * Drive manual field-oriented.
-     *
-     * Regra do HeadingController:
-     * - translacao (frente, tras, lateral ou diagonal) sem giro manual -> segura o heading;
-     * - giro manual (stick direito) -> o piloto sempre vence, controller desligado;
-     * - robo parado -> controller desligado (nao gira sozinho).
-     */
     public static Command joystickDrive(
         Drive drive,
         HeadingController headingController,
@@ -35,7 +30,6 @@ public final class DriveCommands {
     ) {
         DirectionalInputProcessor inputProcessor = new DirectionalInputProcessor();
 
-        // Rampa de aceleracao: repouso -> velocidade maxima em TEMPO_ACELERACAO_SEGUNDOS.
         TranslationSlewLimiter translationLimiter = new TranslationSlewLimiter(
             Constants.Chassi.ACELERACAO_MAXIMA_MPS2,
             Constants.Chassi.PERIODO_CONTROLE_SEGUNDOS
@@ -76,8 +70,6 @@ public final class DriveCommands {
                     targetOmega = 0.0;
                 } else {
                     if (!headingController.estaAtivo()) {
-                        // Só trava o heading quando o robo parou de girar,
-                        // senao o alvo seria capturado no meio de um giro.
                         if (
                             Math.abs(drive.getYawVelocityRadPerSec())
                                 <= Constants.Heading.TOLERANCIA_VELOCIDADE_RAD_S
@@ -112,6 +104,15 @@ public final class DriveCommands {
                 );
 
                 headingController.atualizarDashboard(drive.getHeading(), omega);
+
+                Rotation2d ghostHeading = headingController.estaAtivo()
+                    ? headingController.getHeadingAlvo()
+                    : drive.getHeading();
+                Logger.recordOutput(
+                    "HeadingController/Ghost",
+                    new Pose2d(drive.getPose().getTranslation(), ghostHeading)
+                );
+
                 SmartDashboard.putBoolean("DriveInput/GiroManual", giroManual);
                 SmartDashboard.putNumber("DriveInput/Longitudinal", translation.getX());
                 SmartDashboard.putNumber("DriveInput/Lateral", translation.getY());

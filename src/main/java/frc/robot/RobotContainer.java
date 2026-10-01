@@ -102,7 +102,7 @@ public class RobotContainer {
 
     private SendableChooser<Command> criarSeletorAutonomo() {
         try {
-            return AutoBuilder.buildAutoChooser();
+            return AutoBuilder.buildAutoChooser(); 
         } catch (Exception e) {
             DriverStation.reportError(
                 "Falha ao criar o seletor de autonomo: " + e.getMessage(),
@@ -115,6 +115,12 @@ public class RobotContainer {
     }
 
     private void registrarComandosNomeados() {
+
+        NamedCommands.registerCommand(
+            "Ativar Intake",
+            Commands.runOnce(() -> System.out.println("Intake Ativo"))
+        ); //Comando teste
+
         NamedCommands.registerCommand(
             "ElevadorH0",
             Commands.runOnce(() -> elevador.irParaPreset(Preset.H0), elevador)
@@ -146,7 +152,7 @@ public class RobotContainer {
                 () -> -controleDriver.getLeftX(),
                 () -> -controleDriver.getRightX()
             )
-        );
+        );//SciLab
 
         elevador.setDefaultCommand(
             Commands.run(

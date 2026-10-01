@@ -7,13 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "1"
+            "pathName": "Path1"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Intake Ativo"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "2"
+            "pathName": "Path2"
           }
         }
       ]

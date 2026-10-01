@@ -2,13 +2,6 @@ package frc.robot.subsystems.drive.control;
 
 import edu.wpi.first.math.geometry.Translation2d;
 
-/**
- * Limita a taxa de variacao do VETOR de velocidade (vx, vy) em m/s².
- *
- * Diferente de dois SlewRateLimiter (um por eixo), o limite vale para a magnitude
- * da variacao em qualquer direcao, entao o tempo para atingir a velocidade maxima
- * e o mesmo indo para frente, para o lado ou na diagonal.
- */
 public final class TranslationSlewLimiter {
     private final double maxAccelerationMps2;
     private final double periodSeconds;

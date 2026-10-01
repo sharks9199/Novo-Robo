@@ -21,32 +21,37 @@ public final class Constants {
     }
 
     public static final class Chassi {
-        public static final double MASSA_COM_BATERIA_E_BUMPERS_KG = 30.0;
-        public static final double DISTANCIA_ENTRE_RODAS_METROS = Units.inchesToMeters(21.0);
-        public static final double MEIA_DISTANCIA_ENTRE_RODAS_METROS =
-            DISTANCIA_ENTRE_RODAS_METROS / 2.0;
-        public static final double MOMENTO_INERCIA_ESTIMADO_KG_M2 = 2.0;
+    public static final double MASSA_COM_BATERIA_E_BUMPERS_KG = 34.3;
 
-        public static final double LIMITE_CORRENTE_TRACAO_AMPERES = 60.0;
-        public static final double LIMITE_CORRENTE_DIRECAO_AMPERES = 40.0;
+    public static final double DISTANCIA_ENTRE_RODAS_METROS =
+        Units.inchesToMeters(21.0);
 
-        public static final double VELOCIDADE_MAXIMA_MPS = 5;//Olha, eu (Tomboly), decidi o seguinte: velocidade / tempo = 2.5
+    public static final double MEIA_DISTANCIA_ENTRE_RODAS_METROS =
+        DISTANCIA_ENTRE_RODAS_METROS / 2.0;
 
-        public static final double TEMPO_ACELERACAO_SEGUNDOS = 1.5;
-        /** Derivada: 6,5 m/s em 1,5 s = ~4,33 m/s². */
-        public static final double ACELERACAO_MAXIMA_MPS2 =
-            VELOCIDADE_MAXIMA_MPS / TEMPO_ACELERACAO_SEGUNDOS;
+    public static final double MOMENTO_INERCIA_ESTIMADO_KG_M2 = 2.49;
 
-        public static final double VELOCIDADE_ANGULAR_MAXIMA_RAD_S =
-            Units.degreesToRadians(720.0);
-        public static final double ACELERACAO_ANGULAR_MAXIMA_RAD_S2 =
-            Units.degreesToRadians(1440.0);
+    public static final double LIMITE_CORRENTE_TRACAO_AMPERES = 60.0;
+    public static final double LIMITE_CORRENTE_DIRECAO_AMPERES = 40.0;
 
-        public static final double DEADBAND_JOYSTICK = 0.05;
-        public static final double PERIODO_CONTROLE_SEGUNDOS = 0.02;
+    // Comece conservador para o autônomo.
+    public static final double VELOCIDADE_MAXIMA_MPS = 7.77;
 
-        private Chassi() {}
-    }
+    // Não calcule isso a partir de um tempo de aceleração.
+    public static final double ACELERACAO_MAXIMA_MPS2 = 2.5;
+
+    public static final double VELOCIDADE_ANGULAR_MAXIMA_RAD_S =
+        Units.degreesToRadians(540.0);
+
+    public static final double ACELERACAO_ANGULAR_MAXIMA_RAD_S2 =
+        Units.degreesToRadians(720.0);
+
+    public static final double DEADBAND_JOYSTICK = 0.05;
+    public static final double PERIODO_CONTROLE_SEGUNDOS = 0.02;
+
+    private Chassi() {}
+}
+
 
 
     public static final class ControlesDrive {
@@ -60,9 +65,9 @@ public final class Constants {
     }
 
     public static final class Heading {
-        public static final double KP = 5;
+        public static final double KP = 30.0;
         public static final double KI = 0.0;
-        public static final double KD = 0.25;
+        public static final double KD = 10.0;
 
         public static final double VELOCIDADE_CORRECAO_MAXIMA_RAD_S =
             Units.degreesToRadians(120.0);

@@ -4,11 +4,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.Constants;
 
-/**
- * Processa o stick de translacao com deadband radial e supressao do eixo
- * secundario perto dos eixos cardeais. Funciona globalmente, com o modo RETO
- * ligado ou desligado.
- */
 public final class DirectionalInputProcessor {
     private enum SnapAxis {
         NONE,

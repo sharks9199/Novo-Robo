@@ -93,12 +93,12 @@ public final class TunerConstants {
 
     /** Velocidade física aproximada a 12 V, usada pelo modelo do módulo. */
     public static final LinearVelocity VELOCIDADE_FISICA_A_12V =
-        MetersPerSecond.of(5);
+        MetersPerSecond.of(4.5);
 
     private static final double RELACAO_ACOPLAMENTO = 25.0 / 7.0;
     private static final double REDUCAO_TRACAO = 6.75;
     private static final double REDUCAO_DIRECAO = 150.0 / 7.0;
-    private static final Distance RAIO_RODA = Meters.of(0.0508);
+    private static final Distance RAIO_RODA = Meters.of(0.051);
 
     private static final boolean INVERTER_LADO_ESQUERDO = true;
     private static final boolean INVERTER_LADO_DIREITO = false;

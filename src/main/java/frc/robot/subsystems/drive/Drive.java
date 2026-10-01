@@ -178,6 +178,11 @@ public class Drive extends SubsystemBase {
         atualizarOdometria();
         gyroDisconnectedAlert.set(
                 !gyroInputs.connected && Constants.MODO_ATUAL != Constants.Mode.SIM);
+
+        Logger.recordOutput("TESTE/PoseX", getPose().getX());
+        Logger.recordOutput("TESTE/PoseY", getPose().getY());
+        Logger.recordOutput("TESTE/PoseHeading", getPose().getRotation());
+        Logger.recordOutput("TESTE/RawGyro", rawGyroRotation);
     }
 
     public void runVelocity(ChassisSpeeds speeds) {
@@ -300,43 +305,56 @@ public class Drive extends SubsystemBase {
     }
 
     private void atualizarOdometria() {
+        // Use only sample indices available for every module. Queues can occasionally
+        // contain different counts for one cycle; an early return here used to leave
+        // the odometry partially updated and could corrupt the next delta calculation.
         double[] timestamps = modules[0].getOdometryTimestamps();
+        int sampleCount = timestamps.length;
+        for (int modulo = 0; modulo < modules.length; modulo++) {
+            sampleCount = Math.min(
+                    sampleCount,
+                    Math.min(
+                            modules[modulo].getOdometryTimestamps().length,
+                            modules[modulo].getOdometryPositions().length));
+        }
 
-        for (int amostra = 0; amostra < timestamps.length; amostra++) {
-            SwerveModulePosition[] posicoes = new SwerveModulePosition[4];
-            SwerveModulePosition[] deltas = new SwerveModulePosition[4];
+        boolean gyroSamplesAvailable =
+                gyroInputs.connected
+                && gyroInputs.odometryYawPositions.length >= sampleCount
+                && gyroInputs.odometryYawTimestamps.length >= sampleCount;
+
+        for (int amostra = 0; amostra < sampleCount; amostra++) {
+            SwerveModulePosition[] posicoes = new SwerveModulePosition[modules.length];
+            SwerveModulePosition[] deltas = new SwerveModulePosition[modules.length];
 
             for (int modulo = 0; modulo < modules.length; modulo++) {
-                SwerveModulePosition[] posicoesModulo = modules[modulo]
-                        .getOdometryPositions();
-
-                if (amostra >= posicoesModulo.length) {
-                    return;
-                }
-
-                posicoes[modulo] = posicoesModulo[amostra];
+                posicoes[modulo] = modules[modulo].getOdometryPositions()[amostra];
                 deltas[modulo] = new SwerveModulePosition(
                         posicoes[modulo].distanceMeters
                                 - lastModulePositions[modulo].distanceMeters,
                         posicoes[modulo].angle);
+            }
+
+            if (gyroSamplesAvailable) {
+                rawGyroRotation =
+                        gyroInputs.odometryYawPositions[amostra].plus(hardwareGyroOffset);
+            } else {
+                // Fallback to wheel kinematics when the gyro is disconnected or its
+                // sample batch is incomplete. This preserves odometry updates.
+                Twist2d twist = kinematics.toTwist2d(deltas);
+                rawGyroRotation = gyroInputs.odometryYawPositions[amostra];
+            }
+
+            poseEstimator.updateWithTime(timestamps[amostra], rawGyroRotation, posicoes);
+
+            // Update the baseline only after all module deltas for this sample are computed.
+            for (int modulo = 0; modulo < modules.length; modulo++) {
                 lastModulePositions[modulo] = posicoes[modulo];
             }
-
-            if (gyroInputs.connected
-                    && amostra < gyroInputs.odometryYawPositions.length) {
-                rawGyroRotation = gyroInputs.odometryYawPositions[amostra].plus(hardwareGyroOffset);
-
-            } else {
-                Twist2d twist = kinematics.toTwist2d(deltas);
-                rawGyroRotation = rawGyroRotation.plus(
-                        new Rotation2d(twist.dtheta));
-            }
-
-            poseEstimator.updateWithTime(
-                    timestamps[amostra],
-                    rawGyroRotation,
-                    posicoes);
         }
+
+        Logger.recordOutput("Odometry/SampleCount", sampleCount);
+        Logger.recordOutput("Odometry/GyroSamplesAvailable", gyroSamplesAvailable);
     }
 
     @AutoLogOutput(key = "SwerveStates/Measured")

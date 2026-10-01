@@ -172,6 +172,15 @@
                     "options": {
                       "color": "#ff8c00"
                     }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/HeadingController/Ghost",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "color": "#00aaff"
+                    }
                   }
                 ],
                 "field": "FRC:2026 Field",
