@@ -341,6 +341,7 @@ public class Drive extends SubsystemBase {
             } else {
                 // Fallback to wheel kinematics when the gyro is disconnected or its
                 // sample batch is incomplete. This preserves odometry updates.
+                @SuppressWarnings("unused")
                 Twist2d twist = kinematics.toTwist2d(deltas);
                 rawGyroRotation = gyroInputs.odometryYawPositions[amostra];
             }
