@@ -182,7 +182,11 @@ public class Drive extends SubsystemBase {
             Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
         }
 
-        atualizarOdometria();
+        atualizarOdometria(); //LOGGERS ODOMETRIA NO ADVANTAGESCOPE
+        Logger.recordOutput("Odometry/Robot", getPose());
+        Logger.recordOutput("Odometry/RobotRotation",getPose().getRotation());
+
+
         gyroDisconnectedAlert.set(
                 !gyroInputs.connected && Constants.MODO_ATUAL != Constants.Mode.SIM);
 
@@ -263,6 +267,11 @@ public class Drive extends SubsystemBase {
 
     public double getYawVelocityRadPerSec() {
         return gyroInputs.yawVelocityRadPerSec;
+    }
+
+    /** Yaw do Pigeon com offset físico aplicado, sem correção visual. */
+    public Rotation2d getGyroRotation() {
+        return rawGyroRotation;
     }
 
         public static Drive criarSwerve() {

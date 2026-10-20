@@ -360,6 +360,17 @@ public final class Constants {
         public static final double MT2_DESVIO_XY_TAG_UNICA_METROS = 0.70;
         public static final double MT2_DESVIO_THETA_RAD = 1_000_000.0;
 
+        // Rejeição de medições ruins. Ajustar com logs reais do robô.
+        public static final int TAGS_MINIMAS = 1;
+        public static final double DISTANCIA_MAXIMA_MT2_METROS = 6.0;
+        public static final double VELOCIDADE_ANGULAR_MAXIMA_RAD_S = Units.degreesToRadians(540.0);
+        public static final double AMBIGUIDADE_MAXIMA_TAG_UNICA = 0.20;
+        public static final double DESVIO_MT2_XY_BASE_METROS = 0.20;
+        public static final double DESVIO_MT2_XY_POR_METRO = 0.08;
+        public static final double DESVIO_MT1_XY_BASE_METROS = 0.35;
+        public static final double DESVIO_MT1_XY_POR_METRO = 0.12;
+        public static final int PIPELINE_APRILTAG = 0;
+
         private Vision() {}
     }
 

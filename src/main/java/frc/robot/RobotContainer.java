@@ -11,10 +11,14 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.commands.swerve.SwerveCommands;
 import frc.robot.subsystems.swerve.Drive;
 import frc.robot.subsystems.swerve.control.HeadingController;
+import frc.robot.subsystems.vision.Vision;
+import frc.robot.subsystems.vision.VisionIOReal;
 
 public class RobotContainer {
     private final Drive swerve = Drive.criarSwerve();
     private final HeadingController headingController = new HeadingController();
+    @SuppressWarnings("unused")
+    private final Vision vision = new Vision(swerve, new VisionIOReal());
 
     private final CommandXboxController controleDoDriver = new CommandXboxController(Constants.Controles.PORTA_DRIVER);
     private final SendableChooser<Command> meuSeletorAuto;
