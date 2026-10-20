@@ -1,0 +1,37 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Frente"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Esquerda"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Trás"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Direita"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}
