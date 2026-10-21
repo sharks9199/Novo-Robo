@@ -10,6 +10,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.swerve.SwerveCommands;
 import frc.robot.subsystems.swerve.Drive;
 import frc.robot.subsystems.swerve.control.HeadingController;
+import frc.robot.subsystems.vision.Vision;
+import frc.robot.subsystems.vision.VisionIO;
+import frc.robot.subsystems.vision.VisionIOReal;
+import frc.robot.subsystems.vision.VisionIOSim;
 
 /**
  * Declares the robot's structure: subsystems, controllers, button bindings and the autonomous
@@ -24,6 +28,17 @@ public class RobotContainer {
   private final Drive swerve = Drive.criarSwerve();
   private final HeadingController headingController = new HeadingController();
 
+  /** AprilTag localization; it fuses its measurements into the swerve pose estimator. */
+  @SuppressWarnings("unused")
+  private final Vision vision =
+      new Vision(
+          swerve,
+          switch (Constants.MODO_ATUAL) {
+            case REAL -> new VisionIOReal();
+            case SIM -> new VisionIOSim(swerve::getPose);
+            case REPLAY -> new VisionIO() {};
+          });
+
   private final CommandXboxController controleDoDriver =
       new CommandXboxController(Constants.Controles.PORTA_DRIVER);
 
@@ -35,6 +50,15 @@ public class RobotContainer {
 
   /** Builds the autonomous chooser, publishes it to the dashboard and wires up the controls. */
   public RobotContainer() {
+    // The same heading controller is shared by teleop and autonomous path following.
+    swerve.usarHeadingControllerNoAutonomo(headingController);
+
+    // Keep the heading goal consistent when vision corrects the estimated rotation.
+    swerve.setHeadingCorrectionListener(headingController::aplicarCorrecaoReferencia);
+
+    // Named commands must be registered BEFORE the autonomous chooser is built.
+    configureNamedCommands();
+
     // Publish the autonomous chooser to the dashboard (Elastic).
     meuSeletorAuto = doAutoSelector();
     SmartDashboard.putData("Autonomo/Seletor", meuSeletorAuto);
@@ -63,18 +87,22 @@ public class RobotContainer {
     // Start: reset the field-relative heading.
     controleDoDriver.start().onTrue(Commands.runOnce(this::zerarGuinada));
 
-
-
-               /*ControleDoDriver.a().onTrue(
-                      Commands.runOnce(null, null)
-                       )*/
-
-                       
+    /*ControleDoDriver.a().onTrue(
+      Commands.runOnce(null, null)
+    )*/
   }
 
   // ---------------------------------------------------------------------------
   // Autonomous
   // ---------------------------------------------------------------------------
+
+  /**
+   * Registers commands that PathPlanner paths and autos can trigger by name (event markers, named
+   * commands). Register them here, before {@link #doAutoSelector()} runs.
+   */
+  private void configureNamedCommands() {
+    // Example: NamedCommands.registerCommand("Shoot", shooter.shootCommand());
+  }
 
   /**
    * Builds the PathPlanner autonomous chooser.
@@ -109,6 +137,12 @@ public class RobotContainer {
   // ---------------------------------------------------------------------------
   // Actions
   // ---------------------------------------------------------------------------
+
+  /** Called when autonomous ends: drops the path heading target and heading-hold goal. */
+  public void aoFinalizarAutonomo() {
+    swerve.limparAlvoAutonomo();
+    headingController.desativar();
+  }
 
   /** Resets the field-relative heading and disables the heading-hold controller. */
   public void zerarGuinada() {

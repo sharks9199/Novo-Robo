@@ -218,11 +218,11 @@ public final class HeadingController {
   private void atualizarTuningDoElastic() {
     // PID gains
     double novoKP =
-        MathUtil.clamp(SmartDashboard.getNumber(DASHBOARD + "kP", Constants.Heading.KP), 0.0, 30.0);
+        MathUtil.clamp(SmartDashboard.getNumber(DASHBOARD + "kP", Constants.Heading.KP), 0.0, 60.0);
     double novoKI =
         MathUtil.clamp(SmartDashboard.getNumber(DASHBOARD + "kI", Constants.Heading.KI), 0.0, 5.0);
     double novoKD =
-        MathUtil.clamp(SmartDashboard.getNumber(DASHBOARD + "kD", Constants.Heading.KD), 0.0, 10.0);
+        MathUtil.clamp(SmartDashboard.getNumber(DASHBOARD + "kD", Constants.Heading.KD), 0.0, 20.0);
 
     if (novoKP != kP || novoKI != kI || novoKD != kD) {
       kP = novoKP;

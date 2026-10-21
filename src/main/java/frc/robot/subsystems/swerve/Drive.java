@@ -33,6 +33,7 @@ import frc.robot.OffsetsConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.swerve.gyro.GyroIO;
 import frc.robot.subsystems.swerve.gyro.GyroIOInputsAutoLogged;
+import frc.robot.subsystems.swerve.control.HeadingController;
 import frc.robot.subsystems.swerve.gyro.GyroIOReal;
 import frc.robot.subsystems.swerve.module.Module;
 import frc.robot.subsystems.swerve.module.ModuleIO;
@@ -40,6 +41,7 @@ import frc.robot.subsystems.swerve.module.ModuleIOReal;
 import frc.robot.subsystems.swerve.module.ModuleIOSim;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -69,8 +71,14 @@ public class Drive extends SubsystemBase {
 
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
+  /**
+   * Software yaw offset. Zero by default because the Pigeon 2 already applies its mount pose; see
+   * {@link OffsetsConstants.Pigeon#APLICAR_OFFSET_NO_SOFTWARE}.
+   */
   private final Rotation2d hardwareGyroOffset =
-      Rotation2d.fromDegrees(OffsetsConstants.Pigeon.YAW.in(Degrees));
+      OffsetsConstants.Pigeon.APLICAR_OFFSET_NO_SOFTWARE
+          ? Rotation2d.fromDegrees(OffsetsConstants.Pigeon.YAW.in(Degrees))
+          : Rotation2d.kZero;
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
   private final SwerveDriveKinematics kinematics =
       new SwerveDriveKinematics(getModuleTranslations());
@@ -81,6 +89,14 @@ public class Drive extends SubsystemBase {
   private Rotation2d rawGyroRotation = new Rotation2d();
   private Rotation2d driverGyroOffset =
       Rotation2d.fromDegrees(OffsetsConstants.Driver.FRENTE_GRAUS);
+
+  // Autonomous heading control (shared with teleop through RobotContainer).
+  private HeadingController headingControllerAutonomo = null;
+  private Rotation2d alvoHeadingAutonomo = null;
+
+  // Notified with the heading correction produced by each vision measurement.
+  private Consumer<Rotation2d> headingCorrectionListener = correcao -> {};
+
   private SwerveModulePosition[] lastModulePositions = {
     new SwerveModulePosition(),
     new SwerveModulePosition(),
@@ -191,20 +207,83 @@ public class Drive extends SubsystemBase {
         this::getPose,
         this::setPose,
         this::getChassisSpeeds,
-        (speeds, feedforwards) -> runVelocity(speeds),
+        (speeds, feedforwards) -> runVelocityAutonomo(speeds),
         new PPHolonomicDriveController(
             new PIDConstants(Constants.Autonomo.KP_TRANSLACAO, 0.0, 0.0),
             new PIDConstants(Constants.Autonomo.KP_ROTACAO, 0.0, 0.0)),
         config,
         // Mirror paths for the red alliance.
-        () -> DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
-            == DriverStation.Alliance.Red,
+        Drive::isRedAlliance,
         this);
 
     PathPlannerLogging.setLogActivePathCallback(
         path -> Logger.recordOutput("Autonomo/Trajetoria", path.toArray(new Pose2d[0])));
     PathPlannerLogging.setLogTargetPoseCallback(
-        pose -> Logger.recordOutput("Autonomo/PoseAlvo", pose));
+        pose -> {
+          // The target pose rotation is the heading the path wants at this instant.
+          alvoHeadingAutonomo = pose.getRotation();
+          Logger.recordOutput("Autonomo/PoseAlvo", pose);
+        });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Autonomous heading control
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Makes path following use the given {@link HeadingController} for rotation, exactly like
+   * teleop does while translating. PathPlanner still provides translation; its rotation output is
+   * replaced by the controller's, which tracks the path's target heading.
+   *
+   * @param headingController controller shared with teleop (its dashboard tuning applies here too)
+   */
+  public void usarHeadingControllerNoAutonomo(HeadingController headingController) {
+    this.headingControllerAutonomo = headingController;
+  }
+
+  /** Clears the path heading target and releases the heading controller (call when auto ends). */
+  public void limparAlvoAutonomo() {
+    alvoHeadingAutonomo = null;
+  }
+
+  /**
+   * Registers a callback that receives the heading correction caused by each vision measurement,
+   * so a heading goal can be shifted consistently.
+   *
+   * @param listener receives the rotation correction applied to the estimated pose
+   */
+  public void setHeadingCorrectionListener(Consumer<Rotation2d> listener) {
+    this.headingCorrectionListener = listener != null ? listener : correcao -> {};
+  }
+
+  /**
+   * Output used by PathPlanner. Keeps the path's translation and replaces its rotation with the
+   * {@link HeadingController} output driving the robot toward the path's target heading.
+   *
+   * @param speeds robot-relative speeds computed by PathPlanner
+   */
+  private void runVelocityAutonomo(ChassisSpeeds speeds) {
+    if (headingControllerAutonomo == null || alvoHeadingAutonomo == null) {
+      // No heading target available: fall back to PathPlanner's own rotation output.
+      runVelocity(speeds);
+      return;
+    }
+
+    if (!headingControllerAutonomo.estaAtivo()) {
+      // First cycle: start the motion profile from the measured heading and yaw rate.
+      headingControllerAutonomo.definirHeading(
+          alvoHeadingAutonomo, getHeading(), getYawVelocityRadPerSec());
+    } else {
+      headingControllerAutonomo.definirHeading(alvoHeadingAutonomo);
+    }
+
+    double omega = headingControllerAutonomo.calcular(getHeading());
+    headingControllerAutonomo.atualizarDashboard(getHeading(), omega);
+
+    Logger.recordOutput("Autonomo/HeadingAlvo", alvoHeadingAutonomo);
+    Logger.recordOutput("Autonomo/OmegaHeadingController", omega);
+
+    runVelocity(new ChassisSpeeds(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, omega));
   }
 
   // ---------------------------------------------------------------------------
@@ -382,9 +461,19 @@ public class Drive extends SubsystemBase {
     poseEstimator.resetPosition(rawGyroRotation, lastModulePositions, pose);
   }
 
-  /** Resets the pose estimator's rotation to zero, keeping the current translation. */
+  /**
+   * Resets the pose estimator's rotation, keeping the current translation. Call it while the robot
+   * faces away from the driver station: the heading becomes the alliance's "forward" (0 deg on
+   * blue, 180 deg on red).
+   */
   public void zerarOrientacaO() {
-    poseEstimator.resetRotation(Rotation2d.kZero);
+    poseEstimator.resetRotation(isRedAlliance() ? Rotation2d.k180deg : Rotation2d.kZero);
+  }
+
+  /** Returns whether the robot is on the red alliance (blue when unknown). */
+  private static boolean isRedAlliance() {
+    return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
+        == DriverStation.Alliance.Red;
   }
 
   /** Marks the current heading as the driver's "forward" for field-relative control. */
@@ -421,6 +510,8 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("Odometry/VisionPose", poseVisao);
     Logger.recordOutput("Odometry/VisionHeadingCorrectionDeg", correcaoHeading.getDegrees());
 
+    headingCorrectionListener.accept(correcaoHeading);
+
     return correcaoHeading;
   }
 
@@ -434,9 +525,14 @@ public class Drive extends SubsystemBase {
     return poseEstimator.getEstimatedPosition();
   }
 
-  /** Returns the driver-relative robot rotation (estimated heading minus the driver offset). */
+  /**
+   * Returns the driver-relative robot rotation, used for field-relative teleop: estimated heading
+   * minus the driver offset, flipped by 180 degrees on the red alliance so that "forward" on the
+   * joystick always points away from the driver.
+   */
   public Rotation2d getRotation() {
-    return getPose().getRotation().minus(driverGyroOffset);
+    Rotation2d rotation = getPose().getRotation().minus(driverGyroOffset);
+    return isRedAlliance() ? rotation.plus(Rotation2d.k180deg) : rotation;
   }
 
   /** Returns the estimated robot heading on the field. */

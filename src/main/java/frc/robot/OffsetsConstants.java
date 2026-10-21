@@ -52,6 +52,15 @@ public final class OffsetsConstants {
     public static final Angle PITCH = Degrees.of(0.0);
     public static final Angle ROLL = Degrees.of(0.0);
 
+    /**
+     * Whether {@link #YAW} is also added in software by {@code Drive}.
+     *
+     * <p>The mounting yaw is already written to the Pigeon 2 (mount pose), so its output is
+     * already corrected. Keep this {@code false} to avoid applying the offset twice. If the robot's
+     * heading is off by exactly the mounting yaw on the real robot, flip this value.
+     */
+    public static final boolean APLICAR_OFFSET_NO_SOFTWARE = false;
+
     private Pigeon() {}
   }
 

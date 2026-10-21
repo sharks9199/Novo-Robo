@@ -36,8 +36,9 @@ public class Vision extends SubsystemBase {
 
   @Override
   public void periodic() {
+    // MegaTag 2 needs the robot heading in the same field frame as the pose estimator.
     io.definirOrientacao(
-        drive.getRawGyroRotation().getDegrees(), Math.toDegrees(drive.getYawVelocityRadPerSec()));
+        drive.getHeading().getDegrees(), Math.toDegrees(drive.getYawVelocityRadPerSec()));
     io.updateInputs(inputs);
     Logger.processInputs("Vision/Limelight", inputs);
 
