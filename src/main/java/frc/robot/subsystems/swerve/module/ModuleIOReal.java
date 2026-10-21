@@ -34,21 +34,28 @@ import frc.robot.subsystems.swerve.SwerveOdometry;
 import java.util.Queue;
 
 /**
- * Module IO implementation for Talon FX drive motor controller, Talon FX turn motor controller, and
+ * {@link ModuleIO} implementation for a Talon FX drive motor, a Talon FX turn motor and a
  * CANcoder. Configured using a set of module constants from Phoenix.
  *
- * <p>Device configuration and other behaviors not exposed by Constants.Swerve can be customized here.
+ * <p>Device configuration and other behaviors not exposed by {@code Constants.Swerve} can be
+ * customized here.
  */
 public class ModuleIOReal implements ModuleIO {
   private final SwerveModuleConstants<
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
       constants;
-      
 
-  // Hardware objects
+  // ---------------------------------------------------------------------------
+  // Hardware
+  // ---------------------------------------------------------------------------
+
   private final TalonFX driveTalon;
   private final TalonFX turnTalon;
   private final CANcoder cancoder;
+
+  // ---------------------------------------------------------------------------
+  // Control requests
+  // ---------------------------------------------------------------------------
 
   // Voltage control requests
   private final VoltageOut voltageRequest = new VoltageOut(0);
@@ -57,23 +64,29 @@ public class ModuleIOReal implements ModuleIO {
 
   // Torque-current control requests
   private final TorqueCurrentFOC torqueCurrentRequest = new TorqueCurrentFOC(0);
+
   @SuppressWarnings("unused")
-private final PositionTorqueCurrentFOC positionTorqueCurrentRequest =
+  private final PositionTorqueCurrentFOC positionTorqueCurrentRequest =
       new PositionTorqueCurrentFOC(0.0);
+
   private final VelocityTorqueCurrentFOC velocityTorqueCurrentRequest =
       new VelocityTorqueCurrentFOC(0.0);
 
-  // Timestamp inputs from Phoenix thread
+  // ---------------------------------------------------------------------------
+  // Status signals
+  // ---------------------------------------------------------------------------
+
+  // Timestamp inputs from the Phoenix odometry thread
   private final Queue<Double> timestampQueue;
 
-  // Inputs from drive motor
+  // Inputs from the drive motor
   private final StatusSignal<Angle> drivePosition;
   private final Queue<Double> drivePositionQueue;
   private final StatusSignal<AngularVelocity> driveVelocity;
   private final StatusSignal<Voltage> driveAppliedVolts;
   private final StatusSignal<Current> driveCurrent;
 
-  // Inputs from turn motor
+  // Inputs from the turn motor
   private final StatusSignal<Angle> turnAbsolutePosition;
   private final StatusSignal<Angle> turnPosition;
   private final Queue<Double> turnPositionQueue;
@@ -86,6 +99,11 @@ private final PositionTorqueCurrentFOC positionTorqueCurrentRequest =
   private final Debouncer turnConnectedDebounce = new Debouncer(0.5);
   private final Debouncer turnEncoderConnectedDebounce = new Debouncer(0.5);
 
+  /**
+   * Creates the IO layer for one module, applying all device configuration.
+   *
+   * @param constants the module's Phoenix constants (CAN IDs, gains, ratios, inversions)
+   */
   public ModuleIOReal(
       SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
           constants) {
@@ -94,7 +112,7 @@ private final PositionTorqueCurrentFOC positionTorqueCurrentRequest =
     turnTalon = new TalonFX(constants.SteerMotorId, Constants.Swerve.CAN_BUS);
     cancoder = new CANcoder(constants.EncoderId, Constants.Swerve.CAN_BUS);
 
-    // Configure drive motor
+    // ----- Configure drive motor -----
     var driveConfig = constants.DriveMotorInitialConfigs;
     driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     driveConfig.Slot0 = constants.DriveMotorGains;
@@ -110,7 +128,7 @@ private final PositionTorqueCurrentFOC positionTorqueCurrentRequest =
     tryUntilOk(5, () -> driveTalon.getConfigurator().apply(driveConfig, 0.25));
     tryUntilOk(5, () -> driveTalon.setPosition(0.0, 0.25));
 
-    // Configure turn motor
+    // ----- Configure turn motor -----
     var turnConfig = new TalonFXConfiguration();
     turnConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     turnConfig.Slot0 = constants.SteerMotorGains;
@@ -136,7 +154,7 @@ private final PositionTorqueCurrentFOC positionTorqueCurrentRequest =
             : InvertedValue.CounterClockwise_Positive;
     tryUntilOk(5, () -> turnTalon.getConfigurator().apply(turnConfig, 0.25));
 
-    // Configure CANCoder
+    // ----- Configure CANcoder -----
     CANcoderConfiguration cancoderConfig = constants.EncoderInitialConfigs;
     cancoderConfig.MagnetSensor.MagnetOffset = constants.EncoderOffset;
     cancoderConfig.MagnetSensor.SensorDirection =
@@ -145,18 +163,17 @@ private final PositionTorqueCurrentFOC positionTorqueCurrentRequest =
             : SensorDirectionValue.CounterClockwise_Positive;
     cancoder.getConfigurator().apply(cancoderConfig);
 
-    // Create timestamp queue
+    // ----- Create timestamp queue -----
     timestampQueue = SwerveOdometry.getInstance().makeTimestampQueue();
 
-    // Create drive status signals
+    // ----- Create drive status signals -----
     drivePosition = driveTalon.getPosition();
-    drivePositionQueue =
-        SwerveOdometry.getInstance().registerSignal(driveTalon.getPosition());
+    drivePositionQueue = SwerveOdometry.getInstance().registerSignal(driveTalon.getPosition());
     driveVelocity = driveTalon.getVelocity();
     driveAppliedVolts = driveTalon.getMotorVoltage();
     driveCurrent = driveTalon.getStatorCurrent();
 
-    // Create turn status signals
+    // ----- Create turn status signals -----
     turnAbsolutePosition = cancoder.getAbsolutePosition();
     turnPosition = turnTalon.getPosition();
     turnPositionQueue = SwerveOdometry.getInstance().registerSignal(turnTalon.getPosition());
@@ -164,7 +181,7 @@ private final PositionTorqueCurrentFOC positionTorqueCurrentRequest =
     turnAppliedVolts = turnTalon.getMotorVoltage();
     turnCurrent = turnTalon.getStatorCurrent();
 
-    // Configure periodic frames
+    // ----- Configure periodic frames -----
     BaseStatusSignal.setUpdateFrequencyForAll(
         Drive.ODOMETRY_FREQUENCY, drivePosition, turnPosition);
     BaseStatusSignal.setUpdateFrequencyForAll(
@@ -178,6 +195,10 @@ private final PositionTorqueCurrentFOC positionTorqueCurrentRequest =
         turnCurrent);
     ParentDevice.optimizeBusUtilizationForAll(driveTalon, turnTalon);
   }
+
+  // ---------------------------------------------------------------------------
+  // ModuleIO implementation
+  // ---------------------------------------------------------------------------
 
   @Override
   public void updateInputs(ModuleIOInputs inputs) {
@@ -250,8 +271,6 @@ private final PositionTorqueCurrentFOC positionTorqueCurrentRequest =
 
   @Override
   public void setTurnPosition(Rotation2d rotation) {
-    turnTalon.setControl(positionVoltageRequest
-        .withPosition(rotation.getRotations())
-        .withSlot(0));
+    turnTalon.setControl(positionVoltageRequest.withPosition(rotation.getRotations()).withSlot(0));
   }
 }

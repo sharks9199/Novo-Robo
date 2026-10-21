@@ -12,7 +12,13 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
+/** {@link ModuleIO} implementation that simulates a module with two DC motor models. */
 public class ModuleIOSim implements ModuleIO {
+
+  // ---------------------------------------------------------------------------
+  // Simulation parameters
+  // ---------------------------------------------------------------------------
+
   private static final double DRIVE_KP = 0.05;
   private static final double DRIVE_KD = 0.0;
   private static final double DRIVE_KS = 0.0;
@@ -22,6 +28,10 @@ public class ModuleIOSim implements ModuleIO {
   private static final double TURN_KD = 0.0;
   private static final DCMotor DRIVE_GEARBOX = DCMotor.getKrakenX60Foc(1);
   private static final DCMotor TURN_GEARBOX = DCMotor.getKrakenX60Foc(1);
+
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
 
   private final DCMotorSim driveSim;
   private final DCMotorSim turnSim;
@@ -35,25 +45,40 @@ public class ModuleIOSim implements ModuleIO {
   private double driveAppliedVolts = 0.0;
   private double turnAppliedVolts = 0.0;
 
+  /**
+   * Creates a simulated module.
+   *
+   * @param constants the module's Phoenix constants (gear ratios, inertias, inversion)
+   */
   public ModuleIOSim(
-      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
-    driveSim = new DCMotorSim(
-        LinearSystemId.createDCMotorSystem(DRIVE_GEARBOX, constants.DriveInertia, constants.DriveMotorGearRatio),
-        DRIVE_GEARBOX);
-    turnSim = new DCMotorSim(
-        LinearSystemId.createDCMotorSystem(TURN_GEARBOX, constants.SteerInertia, constants.SteerMotorGearRatio),
-        TURN_GEARBOX);
+      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+          constants) {
+    driveSim =
+        new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(
+                DRIVE_GEARBOX, constants.DriveInertia, constants.DriveMotorGearRatio),
+            DRIVE_GEARBOX);
+    turnSim =
+        new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(
+                TURN_GEARBOX, constants.SteerInertia, constants.SteerMotorGearRatio),
+            TURN_GEARBOX);
 
     this.turnInverted = constants.SteerMotorInverted;
 
     turnController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
+  // ---------------------------------------------------------------------------
+  // ModuleIO implementation
+  // ---------------------------------------------------------------------------
+
   @Override
   public void updateInputs(ModuleIOInputs inputs) {
     // Run closed-loop control
     if (driveClosedLoop) {
-      driveAppliedVolts = driveFFVolts + driveController.calculate(driveSim.getAngularVelocityRadPerSec());
+      driveAppliedVolts =
+          driveFFVolts + driveController.calculate(driveSim.getAngularVelocityRadPerSec());
     } else {
       driveController.reset();
     }
