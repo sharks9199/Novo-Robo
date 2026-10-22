@@ -4,7 +4,10 @@
 
   package frc.robot;
 
-  import edu.wpi.first.wpilibj2.command.Command;
+  import edu.wpi.first.math.geometry.Pose2d;
+  import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
   import edu.wpi.first.wpilibj2.command.CommandScheduler;
   import org.littletonrobotics.junction.LogFileUtil;
   import org.littletonrobotics.junction.Logger;
@@ -19,6 +22,8 @@
    */
   public class Robot extends LoggedRobot {
     private Command m_autonomousCommand;
+
+    private final Field2d arena = new Field2d();
 
     private final RobotContainer m_robotContainer;
 
@@ -49,7 +54,18 @@
       Logger.start();
 
       m_robotContainer = new RobotContainer();
+
     }
+    
+    @Override
+    public void robotInit(){
+      SmartDashboard.putData("Arena", arena);
+    }
+
+    public void setRobotPose(Pose2d pose) {
+      arena.setRobotPose(pose);
+    }
+
 
     // ---------------------------------------------------------------------------
     // Periodic (all modes)
@@ -59,6 +75,7 @@
     @Override
     public void robotPeriodic() {
       CommandScheduler.getInstance().run();
+    
     }
 
     // ---------------------------------------------------------------------------

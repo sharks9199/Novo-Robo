@@ -26,6 +26,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -58,6 +59,7 @@ public class Drive extends SubsystemBase {
   // Constants
   // ---------------------------------------------------------------------------
 
+  private final Field2d arena = new Field2d();
   /** Odometry sampling frequency, in Hz (250 on CAN FD, 100 on classic CAN). */
   public static final double ODOMETRY_FREQUENCY =
       Constants.Swerve.CAN_BUS.isNetworkFD() ? 250.0 : 100.0;
@@ -136,6 +138,7 @@ public class Drive extends SubsystemBase {
 
     // Start the odometry thread.
     SwerveOdometry.getInstance().start();
+    SmartDashboard.putData("Arena", arena);
 
     try {
       configurarAutonomo();
@@ -314,10 +317,14 @@ public class Drive extends SubsystemBase {
       Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
     }
 
-    atualizarOdometria();
+    atualizarOdometria(); //ATUALIZAR ODOMETRIA
+    arena.setRobotPose(getPose());
+    
+    
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.MODO_ATUAL != Constants.Mode.SIM);
 
     Logger.recordOutput("Odometry/Robot", getPose());
+    SmartDashboard.putData("Arena", arena);
     Logger.recordOutput("TESTE/PoseX", getPose().getX());
     Logger.recordOutput("TESTE/PoseY", getPose().getY());
     Logger.recordOutput("TESTE/PoseHeading", getPose().getRotation());
