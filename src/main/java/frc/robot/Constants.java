@@ -145,6 +145,8 @@ public final class Constants {
             .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
 
     private static final Slot0Configs GANHOS_TRACAO =
+
+    
         new Slot0Configs().withKP(0.2).withKI(0.0).withKD(0.08).withKS(0.24).withKV(0.12);
 
     /*
