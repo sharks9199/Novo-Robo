@@ -120,14 +120,14 @@ public final class Constants {
     // ----- Motion limits -----
 
     /** Maximum translational speed, in m/s. */
-    public static final double VELOCIDADE_MAXIMA_MPS_RÁPIDO = 4.02;
+    public static final double VELOCIDADE_MAXIMA_MPS_RAPIDO = 4.02;
 
     /** Maximum translational acceleration, in m/s^2. */
-    public static final double ACELERACAO_MAXIMA_MPS2_RÁPIDO = 7.5;
+    public static final double ACELERACAO_MAXIMA_MPS2_RAPIDO = 7.5;
 
     // Limites fisicos usados pelo chassi, independentemente da marcha selecionada.
-    public static final double VELOCIDADE_MAXIMA_MPS = VELOCIDADE_MAXIMA_MPS_RÁPIDO;
-    public static final double ACELERACAO_MAXIMA_MPS2 = ACELERACAO_MAXIMA_MPS2_RÁPIDO;
+    public static final double VELOCIDADE_MAXIMA_MPS = VELOCIDADE_MAXIMA_MPS_RAPIDO;
+    public static final double ACELERACAO_MAXIMA_MPS2 = ACELERACAO_MAXIMA_MPS2_RAPIDO;
 
     /** Maximum rotational speed, in rad/s. */
     public static final double VELOCIDADE_ANGULAR_MAXIMA_RAD_S = Units.degreesToRadians(540.0);

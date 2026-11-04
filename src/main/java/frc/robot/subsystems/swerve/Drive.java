@@ -95,6 +95,10 @@ public class Drive extends SubsystemBase {
   // Marcha inicial rapida, mantendo a velocidade original do teleoperado.
   private double marchaAtual = Constants.Swerve.LIMITE_POSITIVO_MARCHA;
 
+  // Limites ajustados separadamente pelos gatilhos e bumpers do controle.
+  private double velocidadeMaximaAtual = Constants.Swerve.VELOCIDADE_MAXIMA_MPS_RAPIDO;
+  private double aceleracaoMaximaAtual = Constants.Swerve.ACELERACAO_MAXIMA_MPS2_RAPIDO;
+
   // Autonomous heading control (shared with teleop through RobotContainer).
   private HeadingController headingControllerAutonomo = null;
   private Rotation2d alvoHeadingAutonomo = null;
@@ -323,8 +327,8 @@ public class Drive extends SubsystemBase {
 
     atualizarOdometria(); //ATUALIZAR ODOMETRIA
     arena.setRobotPose(getPose());
-
-
+    
+    
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.MODO_ATUAL != Constants.Mode.SIM);
 
     //Parte 8
@@ -458,15 +462,47 @@ public class Drive extends SubsystemBase {
     runVelocity(new ChassisSpeeds());
   }
 
+  /** LT: diminui 0,5 m/s na velocidade maxima do teleoperado. */
+  public void reduzirVelocidadeMaxima() {
+    velocidadeMaximaAtual = MathUtil.clamp(
+        velocidadeMaximaAtual - 0.5,
+        Constants.Swerve.VELOCIDADE_MAXIMA_MPS_LENTO,
+        Constants.Swerve.VELOCIDADE_MAXIMA_MPS_RAPIDO);
+  }
+
+  /** RT: aumenta 0,5 m/s na velocidade maxima do teleoperado. */
+  public void aumentarVelocidadeMaxima() {
+    velocidadeMaximaAtual = MathUtil.clamp(
+        velocidadeMaximaAtual + 0.5,
+        Constants.Swerve.VELOCIDADE_MAXIMA_MPS_LENTO,
+        Constants.Swerve.VELOCIDADE_MAXIMA_MPS_RAPIDO);
+  }
+
+  /** LB: diminui 0,5 m/s2 na aceleracao maxima do teleoperado. */
+  public void reduzirAceleracaoMaxima() {
+    aceleracaoMaximaAtual = MathUtil.clamp(
+        aceleracaoMaximaAtual - 0.5,
+        Constants.Swerve.ACELERACAO_MAXIMA_MPS_LENTO,
+        Constants.Swerve.ACELERACAO_MAXIMA_MPS2_RAPIDO);
+  }
+
+  /** RB: aumenta 0,5 m/s2 na aceleracao maxima do teleoperado. */
+  public void aumentarAceleracaoMaxima() {
+    aceleracaoMaximaAtual = MathUtil.clamp(
+        aceleracaoMaximaAtual + 0.5,
+        Constants.Swerve.ACELERACAO_MAXIMA_MPS_LENTO,
+        Constants.Swerve.ACELERACAO_MAXIMA_MPS2_RAPIDO);
+  }
+
   /** Retorna o limite de velocidade do modo lento ou rapido ja configurado. */
   public double mudarVelocidade(boolean lentoAtivado) {
-    double velocidadeAtual = lentoAtivado ? Constants.Swerve.VELOCIDADE_MAXIMA_MPS_LENTO:Constants.Swerve.VELOCIDADE_MAXIMA_MPS_RÁPIDO;
+    double velocidadeAtual = lentoAtivado ? Constants.Swerve.VELOCIDADE_MAXIMA_MPS_LENTO:Constants.Swerve.VELOCIDADE_MAXIMA_MPS_RAPIDO;
 
     return velocidadeAtual;
   }
 
   public double mudarAceleracao(boolean lentoAtivado) {
-    double aceleracaoAtual = lentoAtivado ? Constants.Swerve.ACELERACAO_MAXIMA_MPS_LENTO:Constants.Swerve.ACELERACAO_MAXIMA_MPS2_RÁPIDO;
+    double aceleracaoAtual = lentoAtivado ? Constants.Swerve.ACELERACAO_MAXIMA_MPS_LENTO:Constants.Swerve.ACELERACAO_MAXIMA_MPS2_RAPIDO;
 
     return aceleracaoAtual;
   }
@@ -495,23 +531,15 @@ public class Drive extends SubsystemBase {
     return marchaAtual;
   }
 
-  /** Interpola as marchas entre os limites lento (-1) e rapido (+1). */
-  private double percentualMarcha() {
-    return (marchaAtual - Constants.Swerve.LIMITE_NEGATIVO_MARCHA)
-        / (Constants.Swerve.LIMITE_POSITIVO_MARCHA
-            - Constants.Swerve.LIMITE_NEGATIVO_MARCHA);
-  }
 
   /** Velocidade maxima da marcha atual, em metros por segundo. */
   public double getVelocidadeMarcha() {
-    return mudarVelocidade(true)
-        + percentualMarcha() * (mudarVelocidade(false) - mudarVelocidade(true));
+    return velocidadeMaximaAtual;
   }
 
   /** Aceleracao maxima da marcha atual, em metros por segundo ao quadrado. */
   public double getAceleracaoMarcha() {
-    return mudarAceleracao(true)
-        + percentualMarcha() * (mudarAceleracao(false) - mudarAceleracao(true));
+    return aceleracaoMaximaAtual;
   }
 
   // ---------------------------------------------------------------------------
@@ -519,7 +547,7 @@ public class Drive extends SubsystemBase {
   // ---------------------------------------------------------------------------
 
   /**
-   * Resets the robot pose on the field (used by autonomous at the start of a path).
+   * Resets the robot pose on the field (used by autonomous at the stDNJart of a path).
    *
    * @param pose the new pose
    */

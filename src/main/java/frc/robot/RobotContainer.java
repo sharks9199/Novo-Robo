@@ -88,8 +88,27 @@ public class RobotContainer {
   public void configureButtons() {
     // Start: reset the field-relative heading.
     controleDoDriver.start().onTrue(Commands.runOnce(this::zerarGuinada));
-    controleDoDriver.a().onTrue(Commands.runOnce(swerve::subirMarcha));
-    controleDoDriver.b().onTrue(Commands.runOnce(swerve::reduzirMarcha));
+
+      /** Binds driver controller buttons to commands. */
+    // Start: reset the field-relative heading.
+    controleDoDriver.start().onTrue(Commands.runOnce(this::zerarGuinada));
+
+    // LT: diminui a velocidade maxima em 0.5 m/s
+    controleDoDriver.leftTrigger()
+        .onTrue(Commands.runOnce(swerve::reduzirVelocidadeMaxima));
+
+    // RT: aumenta a velocidade maxima em 0.5 m/s
+    controleDoDriver.rightTrigger()
+        .onTrue(Commands.runOnce(swerve::aumentarVelocidadeMaxima));
+
+    // LB: diminui a aceleracao maxima em 0.5 m/s2
+    controleDoDriver.leftBumper()
+        .onTrue(Commands.runOnce(swerve::reduzirAceleracaoMaxima));
+
+    // RB: aumenta a aceleracao maxima em 0.5 m/s2
+    controleDoDriver.rightBumper()
+        .onTrue(Commands.runOnce(swerve::aumentarAceleracaoMaxima));
+ 
 
     /*ControleDoDriver.a().onTrue(
       Commands.runOnce(null, null)
