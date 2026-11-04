@@ -99,9 +99,10 @@ public final class SwerveCommands {
 
               // ----- Apply acceleration limits -----
               Translation2d targetVelocity =
-                  translation.times(Constants.Swerve.VELOCIDADE_MAXIMA_MPS);
+                  translation.times(drive.getVelocidadeMarcha());
 
-              Translation2d velocity = translationLimiter.calculate(targetVelocity);
+              Translation2d velocity = translationLimiter.calculate(
+                  targetVelocity, drive.getAceleracaoMarcha());
               double vx = velocity.getX();
               double vy = velocity.getY();
               double omega = omegaLimiter.calculate(targetOmega);
@@ -126,6 +127,9 @@ public final class SwerveCommands {
               SmartDashboard.putNumber("DriveInput/Longitudinal", translation.getX());
               SmartDashboard.putNumber("DriveInput/Lateral", translation.getY());
               SmartDashboard.putNumber("DriveInput/VelocidadeComandadaMps", velocity.getNorm());
+              SmartDashboard.putNumber("Marcha/Atual", drive.getMarchaAtual());
+              SmartDashboard.putNumber("Marcha/VelocidadeMaximaMps", drive.getVelocidadeMarcha());
+              SmartDashboard.putNumber("Marcha/AceleracaoMaximaMps2", drive.getAceleracaoMarcha());
             },
             drive)
         .finallyDo(

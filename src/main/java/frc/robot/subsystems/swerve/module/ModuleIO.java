@@ -3,6 +3,7 @@ package frc.robot.subsystems.swerve.module;
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 
+//Parte 3
 /** Hardware abstraction for a single swerve module (drive motor, turn motor and encoder). */
 public interface ModuleIO {
 

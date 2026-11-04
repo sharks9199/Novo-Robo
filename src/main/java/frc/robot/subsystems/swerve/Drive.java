@@ -92,6 +92,9 @@ public class Drive extends SubsystemBase {
   private Rotation2d driverGyroOffset =
       Rotation2d.fromDegrees(OffsetsConstants.Driver.FRENTE_GRAUS);
 
+  // Marcha inicial rapida, mantendo a velocidade original do teleoperado.
+  private double marchaAtual = Constants.Swerve.LIMITE_POSITIVO_MARCHA;
+
   // Autonomous heading control (shared with teleop through RobotContainer).
   private HeadingController headingControllerAutonomo = null;
   private Rotation2d alvoHeadingAutonomo = null;
@@ -156,6 +159,7 @@ public class Drive extends SubsystemBase {
         Constants.Swerve.VELOCIDADE_ANGULAR_MAXIMA_RAD_S);
   }
 
+  //Parte 4
   /**
    * Creates a {@link Drive} with the IO implementations matching the current runtime mode.
    *
@@ -319,10 +323,11 @@ public class Drive extends SubsystemBase {
 
     atualizarOdometria(); //ATUALIZAR ODOMETRIA
     arena.setRobotPose(getPose());
-    
-    
+
+
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.MODO_ATUAL != Constants.Mode.SIM);
 
+    //Parte 8
     Logger.recordOutput("Odometry/Robot", getPose());
     SmartDashboard.putData("Arena", arena);
     Logger.recordOutput("TESTE/PoseX", getPose().getX());
@@ -350,6 +355,7 @@ public class Drive extends SubsystemBase {
                   modules[modulo].getOdometryPositions().length));
     }
 
+    //Parte 7
     boolean gyroSamplesAvailable =
         gyroInputs.connected
             && gyroInputs.odometryYawPositions.length >= sampleCount
@@ -452,8 +458,61 @@ public class Drive extends SubsystemBase {
     runVelocity(new ChassisSpeeds());
   }
 
-  /** Placeholder for switching between normal and slow speed modes (not implemented yet). */
-  public void mudarVelocidade() {}
+  /** Retorna o limite de velocidade do modo lento ou rapido ja configurado. */
+  public double mudarVelocidade(boolean lentoAtivado) {
+    double velocidadeAtual = lentoAtivado ? Constants.Swerve.VELOCIDADE_MAXIMA_MPS_LENTO:Constants.Swerve.VELOCIDADE_MAXIMA_MPS_RÁPIDO;
+
+    return velocidadeAtual;
+  }
+
+  public double mudarAceleracao(boolean lentoAtivado) {
+    double aceleracaoAtual = lentoAtivado ? Constants.Swerve.ACELERACAO_MAXIMA_MPS_LENTO:Constants.Swerve.ACELERACAO_MAXIMA_MPS2_RÁPIDO;
+
+    return aceleracaoAtual;
+  }
+
+  /** Avanca uma marcha de 0,1, sem ultrapassar o limite superior. */
+  public void subirMarcha() {
+    ajustarMarcha(Constants.Swerve.PASSO_DA_MARCHA);
+  }
+
+  /** Reduz uma marcha de 0,1, sem ultrapassar o limite inferior. */
+  public void reduzirMarcha() {
+    ajustarMarcha(-Constants.Swerve.PASSO_DA_MARCHA);
+  }
+
+  private void ajustarMarcha(double diferenca) {
+    double novaMarcha = MathUtil.clamp(
+        marchaAtual + diferenca,
+        Constants.Swerve.LIMITE_NEGATIVO_MARCHA,
+        Constants.Swerve.LIMITE_POSITIVO_MARCHA);
+    // Evita acumular erros de arredondamento em trocas sucessivas.
+    marchaAtual = Math.round(novaMarcha / Constants.Swerve.PASSO_DA_MARCHA)
+        * Constants.Swerve.PASSO_DA_MARCHA;
+  }
+
+  public double getMarchaAtual() {
+    return marchaAtual;
+  }
+
+  /** Interpola as marchas entre os limites lento (-1) e rapido (+1). */
+  private double percentualMarcha() {
+    return (marchaAtual - Constants.Swerve.LIMITE_NEGATIVO_MARCHA)
+        / (Constants.Swerve.LIMITE_POSITIVO_MARCHA
+            - Constants.Swerve.LIMITE_NEGATIVO_MARCHA);
+  }
+
+  /** Velocidade maxima da marcha atual, em metros por segundo. */
+  public double getVelocidadeMarcha() {
+    return mudarVelocidade(true)
+        + percentualMarcha() * (mudarVelocidade(false) - mudarVelocidade(true));
+  }
+
+  /** Aceleracao maxima da marcha atual, em metros por segundo ao quadrado. */
+  public double getAceleracaoMarcha() {
+    return mudarAceleracao(true)
+        + percentualMarcha() * (mudarAceleracao(false) - mudarAceleracao(true));
+  }
 
   // ---------------------------------------------------------------------------
   // Pose and heading
@@ -529,7 +588,7 @@ public class Drive extends SubsystemBase {
   /** Returns the estimated robot pose on the field. */
   @AutoLogOutput(key = "Odometry/Robot")
   public Pose2d getPose() {
-    return poseEstimator.getEstimatedPosition();
+    return poseEstimator.getEstimatedPosition(); //-> X, Y, Giro
   }
 
   /**

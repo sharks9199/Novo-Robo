@@ -43,6 +43,7 @@ public final class Constants {
   // Runtime mode
   // ---------------------------------------------------------------------------
 
+  //Parte 1
   /**
    * Mode used when the code is not running on a real roboRIO. Change to {@code REPLAY} to replay
    * logs.
@@ -72,6 +73,18 @@ public final class Constants {
     public static final int PORTA_OPERADOR = 1;
 
     private Controles() {}
+  }
+
+  // ---------------------------------------------------------------------------
+  // Power
+  // ---------------------------------------------------------------------------
+
+  /** Power / brownout parameters. */
+  public static final class Energia {
+    /** Battery voltage below which the roboRIO enters brownout (default is 6.75 V on roboRIO 2). */
+    public static final double TENSAO_BROWNOUT_VOLTS = 6.3;
+
+    private Energia() {}
   }
 
   // ---------------------------------------------------------------------------
@@ -107,10 +120,14 @@ public final class Constants {
     // ----- Motion limits -----
 
     /** Maximum translational speed, in m/s. */
-    public static final double VELOCIDADE_MAXIMA_MPS = 4.02;
+    public static final double VELOCIDADE_MAXIMA_MPS_RÁPIDO = 4.02;
 
     /** Maximum translational acceleration, in m/s^2. */
-    public static final double ACELERACAO_MAXIMA_MPS2 = 7.5;
+    public static final double ACELERACAO_MAXIMA_MPS2_RÁPIDO = 7.5;
+
+    // Limites fisicos usados pelo chassi, independentemente da marcha selecionada.
+    public static final double VELOCIDADE_MAXIMA_MPS = VELOCIDADE_MAXIMA_MPS_RÁPIDO;
+    public static final double ACELERACAO_MAXIMA_MPS2 = ACELERACAO_MAXIMA_MPS2_RÁPIDO;
 
     /** Maximum rotational speed, in rad/s. */
     public static final double VELOCIDADE_ANGULAR_MAXIMA_RAD_S = Units.degreesToRadians(540.0);
@@ -132,6 +149,11 @@ public final class Constants {
     /** Robot control loop period, in seconds. */
     public static final double PERIODO_CONTROLE_SEGUNDOS = 0.02;
 
+    //** Sistema de Marcha para o Swerve */
+    public static final double PASSO_DA_MARCHA = 0.1;
+    public static final double LIMITE_POSITIVO_MARCHA = 1.0;
+    public static final double LIMITE_NEGATIVO_MARCHA = -1.0;
+
     // ----- Closed-loop gains -----
 
     private static final Slot0Configs GANHOS_DIRECAO =
@@ -146,7 +168,7 @@ public final class Constants {
 
     private static final Slot0Configs GANHOS_TRACAO =
 
-    
+
         new Slot0Configs().withKP(0.2).withKI(0.0).withKD(0.08).withKS(0.24).withKV(0.12);
 
     /*

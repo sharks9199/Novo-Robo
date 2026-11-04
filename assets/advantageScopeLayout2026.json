@@ -1,0 +1,355 @@
+{
+  "hubs": [
+    {
+      "x": -8,
+      "y": -8,
+      "width": 1936,
+      "height": 1056,
+      "state": {
+        "sidebar": {
+          "width": 399,
+          "expanded": [
+            "/LiveWindow",
+            "/Shuffleboard",
+            "/FMSInfo",
+            "/AdvantageKit/Drive/Gyro/OdometryYawPositions",
+            "/AdvantageKit/Drive/Gyro/OdometryYawTimestamps",
+            "/AdvantageKit/Drive",
+            "/SmartDashboard/Field",
+            "/SmartDashboard/Field/Robot",
+            "/AdvantageKit/RealOutputs",
+            "/AdvantageKit/RealOutputs/Odometry/Robot",
+            "/AdvantageKit/RealOutputs/Odometry/Robot/rotation",
+            "/AdvantageKit/RealOutputs/Odometry/Robot/translation",
+            "/AdvantageKit/RealOutputs/Sim",
+            "/AdvantageKit/RealOutputs/SwerveChassisSpeeds",
+            "/AdvantageKit/Shooter",
+            "/AdvantageKit/RealOutputs/Sim/GamePieces",
+            "/AdvantageKit/RealOutputs/Sim/GamePieces/Coral",
+            "/AdvantageKit/RealOutputs/SwerveStates/Measured",
+            "/AdvantageKit/RealOutputs/SwerveStates/Measured/0",
+            "/AdvantageKit/Shooter/Flywheel",
+            "/AdvantageKit/Shooter/Pivot",
+            "/AdvantageKit/RealOutputs/Shooter",
+            "/AdvantageKit/RealOutputs/Shooter/RealTargetPose",
+            "/AdvantageKit/RealOutputs/Shooter/RealTargetPose/rotation",
+            "/AdvantageKit/RealOutputs/Shooter/VirtualTargetPose",
+            "/AdvantageKit/Drive/Gyro",
+            "/AdvantageKit/Drive/Gyro/YawPosition",
+            "/AdvantageKit/RealOutputs/SwerveStates/Measured/0/angle",
+            "/AdvantageKit/RealOutputs/SwerveStates/Measured/1",
+            "/AdvantageKit/RealOutputs/SwerveStates/Measured/1/angle",
+            "/AdvantageKit/RealOutputs/Sim/Robot3D/0",
+            "/AdvantageKit/RealOutputs/Sim/Robot3D/0/rotation",
+            "/AdvantageKit/RealOutputs/Sim/Robot3D/0/rotation/q",
+            "/AdvantageKit/RealOutputs/Sim/Robot3D/1",
+            "/AdvantageKit/RealOutputs/Sim/Robot3D/1/rotation",
+            "/AdvantageKit/RealOutputs/Sim/Robot3D/1/rotation/q",
+            "/AdvantageKit/RealOutputs/Sim/Robot3D/2",
+            "/AdvantageKit/RealOutputs/Sim/Robot3D/2/rotation",
+            "/AdvantageKit/RealOutputs/Sim/Robot3D/2/rotation/q",
+            "/AdvantageKit/RealOutputs/Sim/Robot3D/3",
+            "/AdvantageKit/RealOutputs/Sim/Robot3D/3/rotation",
+            "/AdvantageKit/RealOutputs/Sim/Robot3D/3/rotation/q",
+            "/AdvantageKit/RealOutputs/Sim/Robot3D/1/translation",
+            "/AdvantageKit",
+            "/AdvantageKit/RealOutputs/Sim/RobotTurretPose",
+            "/AdvantageKit/RealOutputs/Sim/RobotTurretPose/rotation/q",
+            "/AdvantageKit/Intake",
+            "/AdvantageKit/RealOutputs/Sim/RobotIntakePose",
+            "/AdvantageKit/RealOutputs/Sim/RobotIntakePose/rotation",
+            "/AdvantageKit/RealOutputs/Sim/RobotIntakePose/rotation/q",
+            "/AdvantageKit/RealOutputs/Sim/RobotIntakePose/translation",
+            "/AdvantageKit/RealOutputs/Sim/GamePieces/Fuel",
+            "/AdvantageKit/RealOutputs/Sim/GamePieces/Fuel/rotation",
+            "/AdvantageKit/RealOutputs/Sim/GamePieces/Fuel/rotation/q",
+            "/AdvantageKit/RealOutputs/Sim/GamePieces/Fuel/translation",
+            "/AdvantageKit/RealOutputs/Sim/Parabola",
+            "/AdvantageKit/RealOutputs/Sim/Parabola/29",
+            "/AdvantageKit/RealOutputs/Sim/Parabola/29/rotation",
+            "/AdvantageKit/RealOutputs/Sim/Parabola/29/translation",
+            "/AdvantageKit/RealOutputs/Sim/Parabola/29/rotation/q",
+            "/PathPlanner",
+            "/PathPlanner/currentPose",
+            "/PathPlanner/targetPose"
+          ]
+        },
+        "tabs": {
+          "selected": 9,
+          "tabs": [
+            {
+              "type": 0,
+              "title": "",
+              "controller": null,
+              "controllerUUID": "48f2ja8b15n9w8v31ln0m6p9aytnhq5w",
+              "renderer": "",
+              "controlsHeight": 0
+            },
+            {
+              "type": 5,
+              "title": "Console",
+              "controller": null,
+              "controllerUUID": "0kqgeulsxnsfsim866mzcs8d4kwm0i2h",
+              "renderer": {
+                "highlight": false
+              },
+              "controlsHeight": 0
+            },
+            {
+              "type": 6,
+              "title": "Statistics",
+              "controller": {
+                "sources": [],
+                "timeRange": "visible",
+                "rangeMin": 0,
+                "rangeMax": 10,
+                "stepSize": 1
+              },
+              "controllerUUID": "snwim76jkokedoxkjbr7iam368zl81rs",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 7,
+              "title": "Video",
+              "controller": null,
+              "controllerUUID": "eabhxxun0gx3zj0wld5jmd9oxwemeveo",
+              "renderer": null,
+              "controlsHeight": 85
+            },
+            {
+              "type": 1,
+              "title": "Line Graph",
+              "controller": {
+                "leftSources": [],
+                "rightSources": [],
+                "discreteSources": [],
+                "leftLockedRange": null,
+                "rightLockedRange": null,
+                "leftUnitConversion": {
+                  "autoTarget": null,
+                  "preset": null
+                },
+                "rightUnitConversion": {
+                  "autoTarget": null,
+                  "preset": null
+                },
+                "leftFilter": 0,
+                "rightFilter": 0
+              },
+              "controllerUUID": "39yg1oql9n2pz6qieo41wkt767498qrx",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 2,
+              "title": "2D Field",
+              "controller": {
+                "sources": [
+                  {
+                    "type": "robot",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Odometry/Robot",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "bumpers": ""
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Shooter/RealTargetPose",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "color": "#00ff00"
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Shooter/VirtualTargetPose",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "color": "#ff8c00"
+                    }
+                  }
+                ],
+                "field": "FRC:2026 Field",
+                "orientation": 0,
+                "size": "large"
+              },
+              "controllerUUID": "ug6uy5rtpj3ns6brybpu3s8vb3wmskrp",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 9,
+              "title": "Swerve",
+              "controller": {
+                "sources": [
+                  {
+                    "type": "states",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/SwerveStates/Measured",
+                    "logType": "SwerveModuleState[]",
+                    "visible": true,
+                    "options": {
+                      "color": "#ff0000",
+                      "arrangement": "0,1,2,3"
+                    }
+                  }
+                ],
+                "maxSpeed": 5,
+                "sizeX": 0.65,
+                "sizeY": 0.65,
+                "orientation": 1
+              },
+              "controllerUUID": "1ltfbqjtugjfr0j8sio8eezkbl6uq4ui",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 10,
+              "title": "Mechanism",
+              "controller": [],
+              "controllerUUID": "07uxdy0918zmigiufkoyzvc0k83hobrj",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 11,
+              "title": "Points",
+              "controller": {
+                "sources": [],
+                "width": 960,
+                "height": 720,
+                "orientation": "xr,yd",
+                "origin": "ul"
+              },
+              "controllerUUID": "hdcflfe8npvzkh34ogajatu7za041sdm",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 3,
+              "title": "3D Field",
+              "controller": {
+                "sources": [
+                  {
+                    "type": "robot",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Sim/RobotPose",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {
+                      "model": "2026 KitBot"
+                    }
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Sim/RobotTurretPose",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Sim/RobotPivotPose",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Sim/RobotIntakePose",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "trajectory",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Sim/Parabola",
+                    "logType": "Pose3d[]",
+                    "visible": true,
+                    "options": {
+                      "color": "#00ff00",
+                      "size": "normal"
+                    }
+                  },
+                  {
+                    "type": "gamePiece",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Sim/GamePieces/Fuel",
+                    "logType": "Pose3d[]",
+                    "visible": true,
+                    "options": {
+                      "variant": "Fuel"
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "NT:/PathPlanner/targetPose",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "model": "2026 KitBot",
+                      "color": "#00ff00"
+                    }
+                  },
+                  {
+                    "type": "heatmap",
+                    "logKey": "NT:/PathPlanner/targetPose",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "timeRange": "enabled"
+                    }
+                  }
+                ],
+                "game": "FRC:2026 Field"
+              },
+              "controllerUUID": "yhaid4g822xhfvrqnt1an1p58h9jnwni",
+              "renderer": {
+                "cameraIndex": -2,
+                "orbitFov": 50,
+                "cameraPosition": [
+                  1.0988559398304723,
+                  0.7456687048440387,
+                  2.2623568998482995
+                ],
+                "cameraTarget": [
+                  -0.0421058489749857,
+                  0.43788716136866884,
+                  -0.2976358658267588
+                ]
+              },
+              "controlsHeight": 233
+            },
+            {
+              "type": 12,
+              "title": "Metadata",
+              "controller": null,
+              "controllerUUID": "fvdfah2oltx3qozp5tig9o85wzo48f6k",
+              "renderer": null,
+              "controlsHeight": 0
+            },
+            {
+              "type": 8,
+              "title": "Joysticks",
+              "controller": [
+                "None",
+                "None",
+                "None",
+                "None",
+                "None",
+                "None"
+              ],
+              "controllerUUID": "jfudt4t3ag9urp3x41a0kbbs8866uq2b",
+              "renderer": null,
+              "controlsHeight": 85
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "satellites": [],
+  "version": "26.0.0"
+}

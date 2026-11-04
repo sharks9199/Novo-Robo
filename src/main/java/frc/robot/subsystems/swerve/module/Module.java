@@ -65,6 +65,7 @@ public class Module {
 
   /** Updates and logs inputs, converts odometry samples and refreshes disconnect alerts. */
   public void periodic() {
+    //Parte 6
     io.updateInputs(inputs);
     Logger.processInputs("Drive/Module" + Integer.toString(index), inputs);
 

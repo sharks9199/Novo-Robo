@@ -1,10 +1,11 @@
-  // Copyright (c) FIRST and other WPILib contributors.
+// Copyright (c) FIRST and other WPILib contributors.
   // Open Source Software; you can modify and/or share it under the terms of
   // the WPILib BSD license file in the root directory of this project.
 
   package frc.robot;
 
   import edu.wpi.first.math.geometry.Pose2d;
+  import edu.wpi.first.wpilibj.RobotController;
   import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -16,7 +17,7 @@ import edu.wpi.first.wpilibj2.command.Command;
   import org.littletonrobotics.junction.wpilog.WPILOGWriter;
   import org.littletonrobotics.junction.LoggedRobot;
 
-  /**
+   /**
    * Main robot class. Configures logging, owns the {@link RobotContainer} and drives the command
    * scheduler for every robot mode.
    */
@@ -29,7 +30,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 
     /** Starts AdvantageKit logging and builds the {@link RobotContainer}. */
     public Robot() {
+      RobotController.setBrownoutVoltage(Constants.Energia.TENSAO_BROWNOUT_VOLTS); //Brownout Setpoint
+
       if (Constants.MODO_ATUAL == Constants.Mode.REPLAY) {
+        //Parte 10
         // Replay a log as fast as possible and write the re-processed output next to it.
 
 
@@ -45,6 +49,7 @@ import edu.wpi.first.wpilibj2.command.Command;
         Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
         Logger.addDataReceiver(new NT4Publisher());
       } else {
+        //Parte 2
         // Publish data to NetworkTables and, in simulation, also write a .wpilog file.
         Logger.addDataReceiver(new NT4Publisher());
         if (isSimulation()) {

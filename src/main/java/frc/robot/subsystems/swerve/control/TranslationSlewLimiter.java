@@ -31,9 +31,14 @@ public final class TranslationSlewLimiter {
    * @return the rate-limited velocity vector, in m/s
    */
   public Translation2d calculate(Translation2d target) {
+    return calculate(target, maxAccelerationMps2);
+  }
+
+  /** Applies the acceleration limit of the currently selected gear. */
+  public Translation2d calculate(Translation2d target, double accelerationMps2) {
     Translation2d delta = target.minus(current);
     double distance = delta.getNorm();
-    double maxStep = maxAccelerationMps2 * periodSeconds;
+    double maxStep = Math.abs(accelerationMps2) * periodSeconds;
 
     if (distance <= maxStep) {
       current = target;

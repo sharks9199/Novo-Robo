@@ -1,7 +1,6 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -30,6 +29,7 @@ public class RobotContainer {
   private final Drive swerve = Drive.criarSwerve();
   private final HeadingController headingController = new HeadingController();
 
+  //Parte 9
   /** AprilTag localization; it fuses its measurements into the swerve pose estimator. */
   @SuppressWarnings("unused")
   private final Vision vision =
@@ -88,6 +88,8 @@ public class RobotContainer {
   public void configureButtons() {
     // Start: reset the field-relative heading.
     controleDoDriver.start().onTrue(Commands.runOnce(this::zerarGuinada));
+    controleDoDriver.a().onTrue(Commands.runOnce(swerve::subirMarcha));
+    controleDoDriver.b().onTrue(Commands.runOnce(swerve::reduzirMarcha));
 
     /*ControleDoDriver.a().onTrue(
       Commands.runOnce(null, null)
