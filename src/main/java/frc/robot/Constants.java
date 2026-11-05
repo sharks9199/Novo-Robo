@@ -119,27 +119,27 @@ public final class Constants {
 
     // ----- Motion limits -----
 
-    /** Maximum translational speed, in m/s. */
-    public static final double VELOCIDADE_MAXIMA_MPS_RAPIDO = 4.02;
+    // MODO LENTO: preserva a velocidade e aceleracao que o teleoperado ja utilizava.
+    public static final double VELOCIDADE_MAXIMA_MPS_LENTO = 4.02; // m/s
+    public static final double ACELERACAO_MAXIMA_MPS2_LENTO = 7.5; // m/s^2
 
-    /** Maximum translational acceleration, in m/s^2. */
-    public static final double ACELERACAO_MAXIMA_MPS2_RAPIDO = 7.5;
+    // MODO RAPIDO: ajuste estes dois valores quando quiser aumentar o desempenho.
+    // A velocidade provisoria e o limite teorico de 4.20 m/s a 12 V do proprio robo.
+    // A aceleracao continua em 7.5 ate que voce ajuste o modo rapido.
+    public static final double VELOCIDADE_MAXIMA_MPS_RAPIDO = 4.20; // m/s (AJUSTAR)
+    public static final double ACELERACAO_MAXIMA_MPS2_RAPIDO = 7.5; // m/s^2 (AJUSTAR)
 
-    // Limites fisicos usados pelo chassi, independentemente da marcha selecionada.
-    public static final double VELOCIDADE_MAXIMA_MPS = VELOCIDADE_MAXIMA_MPS_RAPIDO;
-    public static final double ACELERACAO_MAXIMA_MPS2 = ACELERACAO_MAXIMA_MPS2_RAPIDO;
+    // Limites gerais para o chassi; acompanham o maior dos dois modos.
+    public static final double VELOCIDADE_MAXIMA_MPS =
+        Math.max(VELOCIDADE_MAXIMA_MPS_LENTO, VELOCIDADE_MAXIMA_MPS_RAPIDO);
+    public static final double ACELERACAO_MAXIMA_MPS2 =
+        Math.max(ACELERACAO_MAXIMA_MPS2_LENTO, ACELERACAO_MAXIMA_MPS2_RAPIDO);
 
     /** Maximum rotational speed, in rad/s. */
     public static final double VELOCIDADE_ANGULAR_MAXIMA_RAD_S = Units.degreesToRadians(540.0);
 
     /** Maximum rotational acceleration, in rad/s^2. */
     public static final double ACELERACAO_ANGULAR_MAXIMA_RAD_S2 = Units.degreesToRadians(720.0);
-
-    /** Maximum translational speed in slow mode, in m/s. */
-    public static final double VELOCIDADE_MAXIMA_MPS_LENTO = 2.0;
-
-    /** Maximum translational acceleration in slow mode, in m/s^2. */
-    public static final double ACELERACAO_MAXIMA_MPS_LENTO = 1.0;
 
     // ----- Control loop -----
 
@@ -148,11 +148,6 @@ public final class Constants {
 
     /** Robot control loop period, in seconds. */
     public static final double PERIODO_CONTROLE_SEGUNDOS = 0.02;
-
-    //** Sistema de Marcha para o Swerve */
-    public static final double PASSO_DA_MARCHA = 0.1;
-    public static final double LIMITE_POSITIVO_MARCHA = 1.0;
-    public static final double LIMITE_NEGATIVO_MARCHA = -1.0;
 
     // ----- Closed-loop gains -----
 

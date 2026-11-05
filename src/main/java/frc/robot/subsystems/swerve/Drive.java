@@ -92,12 +92,8 @@ public class Drive extends SubsystemBase {
   private Rotation2d driverGyroOffset =
       Rotation2d.fromDegrees(OffsetsConstants.Driver.FRENTE_GRAUS);
 
-  // Marcha inicial rapida, mantendo a velocidade original do teleoperado.
-  private double marchaAtual = Constants.Swerve.LIMITE_POSITIVO_MARCHA;
-
-  // Limites ajustados separadamente pelos gatilhos e bumpers do controle.
-  private double velocidadeMaximaAtual = Constants.Swerve.VELOCIDADE_MAXIMA_MPS_RAPIDO;
-  private double aceleracaoMaximaAtual = Constants.Swerve.ACELERACAO_MAXIMA_MPS2_RAPIDO;
+  // Inicialmente em modo rapido. O botao A alterna para lento e vice-versa.
+  private boolean modoLentoAtivo = false;
 
   // Autonomous heading control (shared with teleop through RobotContainer).
   private HeadingController headingControllerAutonomo = null;
@@ -462,84 +458,28 @@ public class Drive extends SubsystemBase {
     runVelocity(new ChassisSpeeds());
   }
 
-  /** LT: diminui 0,5 m/s na velocidade maxima do teleoperado. */
-  public void reduzirVelocidadeMaxima() {
-    velocidadeMaximaAtual = MathUtil.clamp(
-        velocidadeMaximaAtual - 0.5,
-        Constants.Swerve.VELOCIDADE_MAXIMA_MPS_LENTO,
-        Constants.Swerve.VELOCIDADE_MAXIMA_MPS_RAPIDO);
+  /** Alterna o modo de conducao a cada toque no botao A. */
+  public void alternarModoLento() {
+    modoLentoAtivo = !modoLentoAtivo;
   }
 
-  /** RT: aumenta 0,5 m/s na velocidade maxima do teleoperado. */
-  public void aumentarVelocidadeMaxima() {
-    velocidadeMaximaAtual = MathUtil.clamp(
-        velocidadeMaximaAtual + 0.5,
-        Constants.Swerve.VELOCIDADE_MAXIMA_MPS_LENTO,
-        Constants.Swerve.VELOCIDADE_MAXIMA_MPS_RAPIDO);
+  /** Retorna se o modo lento esta ativo. */
+  public boolean isModoLentoAtivo() {
+    return modoLentoAtivo;
   }
 
-  /** LB: diminui 0,5 m/s2 na aceleracao maxima do teleoperado. */
-  public void reduzirAceleracaoMaxima() {
-    aceleracaoMaximaAtual = MathUtil.clamp(
-        aceleracaoMaximaAtual - 0.5,
-        Constants.Swerve.ACELERACAO_MAXIMA_MPS_LENTO,
-        Constants.Swerve.ACELERACAO_MAXIMA_MPS2_RAPIDO);
+  /** Velocidade maxima do modo atual (m/s). */
+  public double getVelocidadeMaximaAtual() {
+    return modoLentoAtivo
+        ? Constants.Swerve.VELOCIDADE_MAXIMA_MPS_LENTO
+        : Constants.Swerve.VELOCIDADE_MAXIMA_MPS_RAPIDO;
   }
 
-  /** RB: aumenta 0,5 m/s2 na aceleracao maxima do teleoperado. */
-  public void aumentarAceleracaoMaxima() {
-    aceleracaoMaximaAtual = MathUtil.clamp(
-        aceleracaoMaximaAtual + 0.5,
-        Constants.Swerve.ACELERACAO_MAXIMA_MPS_LENTO,
-        Constants.Swerve.ACELERACAO_MAXIMA_MPS2_RAPIDO);
-  }
-
-  /** Retorna o limite de velocidade do modo lento ou rapido ja configurado. */
-  public double mudarVelocidade(boolean lentoAtivado) {
-    double velocidadeAtual = lentoAtivado ? Constants.Swerve.VELOCIDADE_MAXIMA_MPS_LENTO:Constants.Swerve.VELOCIDADE_MAXIMA_MPS_RAPIDO;
-
-    return velocidadeAtual;
-  }
-
-  public double mudarAceleracao(boolean lentoAtivado) {
-    double aceleracaoAtual = lentoAtivado ? Constants.Swerve.ACELERACAO_MAXIMA_MPS_LENTO:Constants.Swerve.ACELERACAO_MAXIMA_MPS2_RAPIDO;
-
-    return aceleracaoAtual;
-  }
-
-  /** Avanca uma marcha de 0,1, sem ultrapassar o limite superior. */
-  public void subirMarcha() {
-    ajustarMarcha(Constants.Swerve.PASSO_DA_MARCHA);
-  }
-
-  /** Reduz uma marcha de 0,1, sem ultrapassar o limite inferior. */
-  public void reduzirMarcha() {
-    ajustarMarcha(-Constants.Swerve.PASSO_DA_MARCHA);
-  }
-
-  private void ajustarMarcha(double diferenca) {
-    double novaMarcha = MathUtil.clamp(
-        marchaAtual + diferenca,
-        Constants.Swerve.LIMITE_NEGATIVO_MARCHA,
-        Constants.Swerve.LIMITE_POSITIVO_MARCHA);
-    // Evita acumular erros de arredondamento em trocas sucessivas.
-    marchaAtual = Math.round(novaMarcha / Constants.Swerve.PASSO_DA_MARCHA)
-        * Constants.Swerve.PASSO_DA_MARCHA;
-  }
-
-  public double getMarchaAtual() {
-    return marchaAtual;
-  }
-
-
-  /** Velocidade maxima da marcha atual, em metros por segundo. */
-  public double getVelocidadeMarcha() {
-    return velocidadeMaximaAtual;
-  }
-
-  /** Aceleracao maxima da marcha atual, em metros por segundo ao quadrado. */
-  public double getAceleracaoMarcha() {
-    return aceleracaoMaximaAtual;
+  /** Aceleracao maxima do modo atual (m/s^2). */
+  public double getAceleracaoMaximaAtual() {
+    return modoLentoAtivo
+        ? Constants.Swerve.ACELERACAO_MAXIMA_MPS2_LENTO
+        : Constants.Swerve.ACELERACAO_MAXIMA_MPS2_RAPIDO;
   }
 
   // ---------------------------------------------------------------------------
