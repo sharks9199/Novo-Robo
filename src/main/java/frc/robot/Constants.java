@@ -126,7 +126,7 @@ public final class Constants {
     // MODO RAPIDO: ajuste estes dois valores quando quiser aumentar o desempenho.
     // A velocidade provisoria e o limite teorico de 4.20 m/s a 12 V do proprio robo.
     // A aceleracao continua em 7.5 ate que voce ajuste o modo rapido.
-    public static final double VELOCIDADE_MAXIMA_MPS_RAPIDO = 9.5; // m/s (AJUSTAR)
+    public static final double VELOCIDADE_MAXIMA_MPS_RAPIDO = 9.20; // m/s (AJUSTAR)
     public static final double ACELERACAO_MAXIMA_MPS2_RAPIDO = 13.5; // m/s^2 (AJUSTAR)
 
     // Limites gerais para o chassi; acompanham o maior dos dois modos.
@@ -423,7 +423,7 @@ public final class Constants {
     public static final double DEADBAND_RADIAL = 0.07;
 
     /** Exponent applied to the translation magnitude for finer control at low speeds. */
-    public static final double EXPO_TRANSLACAO = 2;
+    public static final double EXPO_TRANSLACAO = 3;
 
     /** Minimum value of the dominant axis required to engage axis snapping. */
     public static final double EIXO_PRINCIPAL_MINIMO_SNAP = 0.18;
