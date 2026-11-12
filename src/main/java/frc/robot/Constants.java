@@ -426,10 +426,10 @@ public final class Constants {
     public static final double EXPO_TRANSLACAO = 3;
 
     /** Minimum value of the dominant axis required to engage axis snapping. */
-    public static final double EIXO_PRINCIPAL_MINIMO_SNAP = 0.18;
+    public static final double EIXO_PRINCIPAL_MINIMO_SNAP = 0.25;
 
     /** Secondary axis must be below this value to engage axis snapping. */
-    public static final double EIXO_SECUNDARIO_ENTRAR_SNAP = 0.11;
+    public static final double EIXO_SECUNDARIO_ENTRAR_SNAP = 0.20;
 
     /** Secondary axis must exceed this value to leave axis snapping (hysteresis). */
     public static final double EIXO_SECUNDARIO_SAIR_SNAP = 0.14;

@@ -1,7 +1,6 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -79,18 +78,22 @@ public class RobotContainer {
         SwerveCommands.movimentacaoDrive(
             swerve,
             headingController,
-            () -> -controleDoDriver.getLeftY(),
-            () -> -controleDoDriver.getLeftX(),
-            () -> -controleDoDriver.getRightX()));
+            () -> -controleDoDriver.getRawAxis(1),
+            () -> -controleDoDriver.getRawAxis(0),
+            () -> -controleDoDriver.getRawAxis(2)));
   }
 
   /** Binds driver controller buttons to commands. */
   public void configureButtons() {
     // Start: reset the field-relative heading.
-    controleDoDriver.start().onTrue(Commands.runOnce(this::zerarGuinada));
+    //controleDoDriver.start().onTrue(Commands.runOnce(this::zerarGuinada));
+
 
     // A: alterna entre modo lento e modo rapido a cada toque.
-    controleDoDriver.a().onTrue(Commands.runOnce(swerve::alternarModoLento));
+    //controleDoDriver.a().onTrue(Commands.runOnce(swerve::alternarModoLento));
+
+    controleDoDriver.button(10).onTrue(Commands.runOnce(this::zerarGuinada));
+    controleDoDriver.button(2).onTrue(Commands.runOnce(swerve::alternarModoLento));
   }
 
   // ---------------------------------------------------------------------------

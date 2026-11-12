@@ -3,7 +3,7 @@
   "robotLength": 0.86,
   "holonomicMode": true,
   "pathFolders": [
-    "Quadradinho"
+    "Autonomo"
   ],
   "autoFolders": [],
   "defaultMaxVel": 4.02,
