@@ -113,7 +113,7 @@ public class Vision extends SubsystemBase {
         || !Double.isFinite(timestamp)
         || timestamp <= 0.0
         || timestamp <= ultimoTimestampAceito
-        || !Double.isFinite(pose.getX())
+        || !Double.isFinite(pose.getX()) //isso foi MUUUUITO DAORA de fazer. Vários Ou para no final retornar false Kkk
         || !Double.isFinite(pose.getY())
         || !Double.isFinite(distancia)
         || distancia <= 0.0
