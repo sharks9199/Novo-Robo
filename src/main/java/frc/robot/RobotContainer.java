@@ -6,7 +6,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.swerve.SwerveCommands;
 import frc.robot.subsystems.swerve.Drive;
 import frc.robot.subsystems.swerve.control.HeadingController;
@@ -40,8 +42,33 @@ public class RobotContainer {
             case REPLAY -> new VisionIO() {};
           });
 
-  private final CommandXboxController controleDoDriver =
-      new CommandXboxController(Constants.Controles.PORTA_DRIVER);
+          
+
+  private static final int PORTA_DRIVER = 0;
+  private static final int PORTA_OPERADOR = 1;
+
+  //dois controle usando a mesma porta
+  private final CommandPS5Controller controleDoDriverPS5 =
+      new CommandPS5Controller(PORTA_DRIVER);
+
+  private final CommandXboxController controleDoDriverXbox =
+      new CommandXboxController(PORTA_DRIVER);
+
+  @SuppressWarnings("unused")
+  private final CommandXboxController controleOperador =
+    new CommandXboxController(PORTA_OPERADOR);
+
+  private boolean usandoPS5() {
+      return DriverStation.isJoystickConnected(PORTA_DRIVER)
+          && !DriverStation.getJoystickIsXbox(PORTA_DRIVER);
+  }
+  private boolean usandoXbox() {
+      return DriverStation.isJoystickConnected(PORTA_DRIVER)
+          && DriverStation.getJoystickIsXbox(PORTA_DRIVER);
+  }
+
+      
+    
 
   // ---------------------------------------------------------------------------
   // Dashboard
@@ -66,6 +93,7 @@ public class RobotContainer {
 
     configureBindings();
     configureButtons();
+    
   }
 
   // ---------------------------------------------------------------------------
@@ -73,28 +101,56 @@ public class RobotContainer {
   // ---------------------------------------------------------------------------
 
   /** Sets the default drive command (field-relative teleop with heading hold). */
-  private void configureBindings() {
+
+private void configureBindings() {
     swerve.setDefaultCommand(
         SwerveCommands.movimentacaoDrive(
             swerve,
             headingController,
-            () -> -controleDoDriver.getRawAxis(1),
-            () -> -controleDoDriver.getRawAxis(0),
-            () -> -controleDoDriver.getRawAxis(2)));
-  }
+
+            () -> usandoPS5()
+                ? -controleDoDriverPS5.getLeftY()
+                : usandoXbox()
+                    ? -controleDoDriverXbox.getLeftY()
+                    : 0.0,
+
+            () -> usandoPS5()
+                ? -controleDoDriverPS5.getLeftX()
+                : usandoXbox()
+                    ? -controleDoDriverXbox.getLeftX()
+                    : 0.0,
+
+            () -> usandoPS5()
+                ? -controleDoDriverPS5.getRightX()
+                : usandoXbox()
+                    ? -controleDoDriverXbox.getRightX()
+                    : 0.0
+        )
+    );
+}
+
 
   /** Binds driver controller buttons to commands. */
-  public void configureButtons() {
-    // Start: reset the field-relative heading.
-    //controleDoDriver.start().onTrue(Commands.runOnce(this::zerarGuinada));
 
+public void configureButtons() {
 
-    // A: alterna entre modo lento e modo rapido a cada toque.
-    //controleDoDriver.a().onTrue(Commands.runOnce(swerve::alternarModoLento));
+    new Trigger(this::usandoPS5)
+        .and(controleDoDriverPS5.options())
+        .onTrue(Commands.runOnce(this::zerarGuinada));
 
-    controleDoDriver.button(10).onTrue(Commands.runOnce(this::zerarGuinada));
-    controleDoDriver.button(2).onTrue(Commands.runOnce(swerve::alternarModoLento));
-  }
+    new Trigger(this::usandoXbox)
+        .and(controleDoDriverXbox.start())
+        .onTrue(Commands.runOnce(this::zerarGuinada));
+
+    new Trigger(this::usandoPS5)
+        .and(controleDoDriverPS5.cross())
+        .onTrue(Commands.runOnce(swerve::alternarModoLento));
+
+    new Trigger(this::usandoXbox)
+        .and(controleDoDriverXbox.a())
+        .onTrue(Commands.runOnce(swerve::alternarModoLento));
+}   
+
 
   // ---------------------------------------------------------------------------
   // Autonomous
@@ -140,6 +196,7 @@ public class RobotContainer {
 
   // ---------------------------------------------------------------------------
   // Actions
+
   // ---------------------------------------------------------------------------
 
   /** Called when autonomous ends: drops the path heading target and heading-hold goal. */

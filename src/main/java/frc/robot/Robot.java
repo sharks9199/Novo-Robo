@@ -83,6 +83,14 @@ import edu.wpi.first.wpilibj2.command.Command;
     
     }
 
+
+    @Override
+    public void simulationPeriodic() {
+        //SimulatedArena.getInstance().simulationPeriodic(); //para atualizar a física com paredes...
+        //SimulatedArena.overrideSimulationTimings(0.01, 3); //Isso simula um robo de 100Hz com 300Hz odometria.
+    }
+
+
     // ---------------------------------------------------------------------------
     // Disabled
     // ---------------------------------------------------------------------------
@@ -152,4 +160,5 @@ import edu.wpi.first.wpilibj2.command.Command;
 
     @Override
     public void testExit() {}
+
   }
